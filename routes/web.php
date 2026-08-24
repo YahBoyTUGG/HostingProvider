@@ -1,10 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\UserDashboardController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\SupportTicketController;
+use App\Models\Features;
 
 // Guest Authentication Routes (Inertia Pages)
 Route::middleware('guest')->group(function () {
@@ -12,7 +14,15 @@ Route::middleware('guest')->group(function () {
     Route::inertia('/register', 'auth/Register')->name('register');
 });
 
-Route::inertia('/', 'Welcome')->name('home');
+// Home Page with Dynamic Featured Offers
+Route::get('/', function () {
+    return Inertia::render('Welcome', [
+        'featured_offers' => Features::with('server_offer')
+            ->whereHas('server_offer', fn ($query) => $query->where('is_active', true))
+            ->orderBy('sort_order')
+            ->get(),
+    ]);
+})->name('home');
 
 // Authenticated Routes
 Route::middleware(['auth'])->group(function () {
