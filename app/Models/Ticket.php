@@ -15,7 +15,9 @@ class Ticket extends Model
 
     protected $fillable = [
         'user_id',
+        'subscription_id',
         'subject',
+        'priority',
         'status',
     ];
 
@@ -33,6 +35,11 @@ class Ticket extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function subscription(): BelongsTo
+    {
+        return $this->belongsTo(Subscription::class);
     }
 
     /**

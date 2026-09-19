@@ -1,19 +1,31 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 const props = defineProps({
-    activeSubscriptions: Array,
-    monthlySpend: Number,
-    subscriptionHistory: Array,
+    activeSubscriptions: {
+        type: Array,
+        default: () => [],
+    },
+    monthlySpend: {
+        type: Number,
+        default: 0,
+    },
+    subscriptionHistory: {
+        type: Array,
+        default: () => [],
+    },
     flash: Object,
 });
 
+const page = usePage();
+const user = page.props.auth?.user || {};
+
+const isProfileMenuOpen = ref(false);
 const processingPowerId = ref(null);
 const processingCancelId = ref(null);
 
-// Toggle VM Power (Running / Stopped)
-const togglePower = (subscriptionId) => {
+const togglePower = (subscriptionId: number) => {
     processingPowerId.value = subscriptionId;
     router.post(
         route('subscriptions.toggle-power', subscriptionId),
@@ -25,8 +37,7 @@ const togglePower = (subscriptionId) => {
     );
 };
 
-// Cancel Subscription
-const cancelSubscription = (subscriptionId) => {
+const cancelSubscription = (subscriptionId: number) => {
     if (confirm('Are you sure you want to cancel this subscription? The server will be stopped immediately.')) {
         processingCancelId.value = subscriptionId;
         router.post(
@@ -39,15 +50,20 @@ const cancelSubscription = (subscriptionId) => {
         );
     }
 };
+
+const logout = () => {
+    router.post('/logout');
+};
 </script>
 
 <template>
     <Head title="User Dashboard - Server Management" />
 
     <div class="min-h-screen bg-slate-900 text-slate-100 font-sans">
-        <!-- Top Navigation -->
-        <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
+        <!-- Top Navigation Bar -->
+        <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <!-- Brand Logo -->
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20">
                         VR
@@ -55,17 +71,82 @@ const cancelSubscription = (subscriptionId) => {
                     <span class="font-semibold text-lg tracking-tight">VelocityRig</span>
                 </div>
 
+                <!-- Right Header Controls -->
                 <div class="flex items-center gap-4">
                     <Link
+                        v-if="user.role === 'admin'"
+                        href="/admin/dashboard"
+                        class="text-m font-medium text-indigo-400 hover:text-indigo-300 transition-colors hidden sm:inline-block"
+                    >
+                        Admin Console
+                    </Link>
+
+                    <Link
                         :href="route('tickets.index')"
-                        class="text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
+                        class="text-m font-medium text-slate-400 hover:text-slate-200 transition-colors hidden sm:inline-block"
                     >
                         Support Tickets
                     </Link>
-                    <div class="h-4 w-px bg-slate-800"></div>
-                    <span class="text-sm font-medium text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
-                        Client Portal
-                    </span>
+
+                    <div class="h-4 w-px bg-slate-800 hidden sm:block"></div>
+
+                    <!-- User Profile & Settings Dropdown -->
+                    <div class="relative">
+                        <button
+                            @click="isProfileMenuOpen = !isProfileMenuOpen"
+                            class="flex items-center gap-3 p-1.5 rounded-xl hover:bg-slate-800/80 border border-transparent hover:border-slate-700 transition-all focus:outline-none"
+                        >
+                            <div class="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center font-semibold text-indigo-400 text-xs">
+                                {{ user.first_name ? user.first_name[0] : 'U' }}{{ user.last_name ? user.last_name[0] : '' }}
+                            </div>
+                            <div class="text-left hidden md:block">
+                                <p class="text-s font-medium text-slate-200 leading-none">
+                                    {{ user.first_name }} {{ user.last_name }}
+                                </p>
+                                <p class="text-[12px] text-slate-400 leading-tight mt-0.5 truncate max-w-[120px]">
+                                    {{ user.email }}
+                                </p>
+                            </div>
+                            <svg class="w-4 h-4 text-slate-400 transition-transform" :class="{ 'rotate-180': isProfileMenuOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        <!-- Profile Dropdown Menu -->
+                        <div
+                            v-if="isProfileMenuOpen"
+                            @click.outside="isProfileMenuOpen = false"
+                            class="absolute right-0 mt-2 w-56 rounded-2xl bg-slate-800 border border-slate-700 shadow-2xl py-2 z-50 text-sm"
+                        >
+                            <div class="px-4 py-2 border-b border-slate-700/60">
+                                <p class="text-xs font-semibold text-white">{{ user.first_name }} {{ user.last_name }}</p>
+                                <p class="text-xs text-slate-400 truncate">{{ user.email }}</p>
+                            </div>
+
+                            <Link
+                                :href="route('profile.edit')"
+                                class="w-full flex items-center gap-2 px-4 py-2 text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors"
+                            >
+                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                Account Settings
+                            </Link>
+
+                            <div class="my-1 border-t border-slate-700/60"></div>
+
+                            <button
+                                @click="logout"
+                                class="w-full text-left flex items-center gap-2 px-4 py-2 text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors font-medium"
+                            >
+                                <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                                Log Out
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>
@@ -91,7 +172,7 @@ const cancelSubscription = (subscriptionId) => {
                 <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 backdrop-blur">
                     <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Estimated Monthly Spend</p>
                     <div class="mt-2 flex items-baseline justify-between">
-                        <span class="text-3xl font-extrabold text-white">${{ monthlySpend.toFixed(2) }}</span>
+                        <span class="text-3xl font-extrabold text-white">${{ monthlySpend ? monthlySpend.toFixed(2) : '0.00' }}</span>
                         <span class="text-xs text-slate-400">USD / mo</span>
                     </div>
                 </div>
@@ -119,7 +200,7 @@ const cancelSubscription = (subscriptionId) => {
 
                 <div v-if="activeSubscriptions.length === 0" class="bg-slate-800/40 border border-dashed border-slate-700 rounded-2xl p-12 text-center space-y-3">
                     <p class="text-slate-400 text-base">You have no active servers provisioned.</p>
-                    <Link :href="route('home')" class="inline-block px-5 py-2.5 bg-indigo-600 text-white font-medium rounded-xl text-sm">
+                    <Link :href="route('catalog')" class="inline-block px-5 py-2.5 bg-indigo-600 text-white font-medium rounded-xl text-sm">
                         Browse Server Plans
                     </Link>
                 </div>
@@ -134,7 +215,7 @@ const cancelSubscription = (subscriptionId) => {
                         <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-700/60">
                             <div class="space-y-1">
                                 <div class="flex items-center gap-3">
-                                    <h3 class="text-lg font-bold text-white">{{ sub.server_offer.name }}</h3>
+                                    <h3 class="text-lg font-bold text-white">{{ sub.server_offer?.name }}</h3>
                                     <span
                                         class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider"
                                         :class="sub.virtual_machine?.status === 'running' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'"
@@ -186,7 +267,7 @@ const cancelSubscription = (subscriptionId) => {
                             </div>
                             <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-800">
                                 <span class="text-xs text-slate-500 block">Billing Term</span>
-                                <span class="text-slate-200 font-medium capitalize">{{ sub.billing_cycle.replace('_', ' ') }} (${{ sub.cost }})</span>
+                                <span class="text-slate-200 font-medium capitalize">{{ sub.billing_cycle?.replace('_', ' ') }} (${{ sub.cost }})</span>
                             </div>
                         </div>
 
@@ -225,7 +306,7 @@ const cancelSubscription = (subscriptionId) => {
                         <tbody class="divide-y divide-slate-700/50">
                             <tr v-for="item in subscriptionHistory" :key="item.id" class="hover:bg-slate-700/20 transition-colors">
                                 <td class="px-6 py-4 font-medium text-white">{{ item.server_offer?.name }}</td>
-                                <td class="px-6 py-4 capitalize">{{ item.billing_cycle.replace('_', ' ') }}</td>
+                                <td class="px-6 py-4 capitalize">{{ item.billing_cycle?.replace('_', ' ') }}</td>
                                 <td class="px-6 py-4 font-mono">${{ item.cost }}</td>
                                 <td class="px-6 py-4">
                                     <span
@@ -236,7 +317,7 @@ const cancelSubscription = (subscriptionId) => {
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-xs text-slate-400">
-                                    {{ new Date(item.ends_at).toLocaleDateString() }}
+                                    {{ item.ends_at ? new Date(item.ends_at).toLocaleDateString() : 'N/A' }}
                                 </td>
                             </tr>
                         </tbody>
