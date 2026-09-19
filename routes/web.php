@@ -19,14 +19,17 @@ Route::middleware('guest')->group(function () {
 });
 
 // Home Page with Dynamic Featured Offers
-Route::get('/', function () {
+$welcomePage = function () {
     return Inertia::render('Welcome', [
         'featured_offers' => Features::with('server_offer')
             ->whereHas('server_offer', fn ($query) => $query->where('is_active', true))
             ->orderBy('sort_order')
             ->get(),
     ]);
-})->name('home');
+};
+
+Route::get('/', $welcomePage)->name('home');
+Route::get('/welcome', $welcomePage)->name('welcome');
 
 // About Us Route
 Route::get('/about', function () {

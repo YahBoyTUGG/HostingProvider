@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import SiteHeader from '@/components/SiteHeader.vue';
 
 defineOptions({
     layout: null,
@@ -13,7 +14,7 @@ const form = useForm({
 });
 
 const submitContact = () => {
-    form.post(('contact'), {
+    form.post('contact', {
         onSuccess: () => form.reset(),
     });
 };
@@ -22,81 +23,86 @@ const submitContact = () => {
 <template>
     <Head title="Contact Us - VelocityRig" />
 
-    <div class="min-h-screen bg-slate-900 text-slate-100 font-sans">
-        <!-- Header -->
-        <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20">
-                        VR
-                    </div>
-                    <span class="font-semibold text-lg tracking-tight">VelocityRig</span>
-                </div>
-                <div class="flex items-center gap-6 text-sm font-medium">
-                    <Link :href="route('catalog')" class="text-slate-400 hover:text-slate-200 transition-colors">Catalog</Link>
-                    <Link :href="route('about')" class="text-slate-400 hover:text-slate-200 transition-colors">About Us</Link>
-                    <Link :href="route('dashboard')" class="text-indigo-400 hover:text-indigo-300 font-semibold">Dashboard</Link>
-                </div>
-            </div>
-        </header>
+    <div class="min-h-screen bg-slate-900 font-sans text-slate-100">
+        <SiteHeader />
 
-        <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
+        <main class="mx-auto max-w-3xl space-y-8 px-4 py-12 sm:px-6 lg:px-8">
             <div>
-                <h1 class="text-3xl font-extrabold text-white tracking-tight">Get in Touch</h1>
-                <p class="text-slate-400 mt-1">Have pre-sales questions or general inquiries? Send us a message below.</p>
+                <h1 class="text-3xl font-extrabold tracking-tight text-white">
+                    Get in Touch
+                </h1>
+                <p class="mt-1 text-slate-400">
+                    Have pre-sales questions or general inquiries? Send us a
+                    message below.
+                </p>
             </div>
 
             <!-- Public Contact Form -->
-            <form @submit.prevent="submitContact" class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 sm:p-8 backdrop-blur space-y-5">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <form
+                @submit.prevent="submitContact"
+                class="space-y-5 rounded-2xl border border-slate-700/60 bg-slate-800/60 p-6 backdrop-blur sm:p-8"
+            >
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Your Name</label>
+                        <label
+                            class="mb-2 block text-xs font-semibold tracking-wider text-slate-400 uppercase"
+                            >Your Name</label
+                        >
                         <input
                             v-model="form.name"
                             type="text"
                             required
                             placeholder="John Doe"
-                            class="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+                            class="w-full rounded-xl border border-slate-700 bg-slate-900/80 px-3.5 py-2.5 text-sm text-slate-200 focus:border-indigo-500 focus:outline-none"
                         />
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Email Address</label>
+                        <label
+                            class="mb-2 block text-xs font-semibold tracking-wider text-slate-400 uppercase"
+                            >Email Address</label
+                        >
                         <input
                             v-model="form.email"
                             type="email"
                             required
                             placeholder="john@example.com"
-                            class="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+                            class="w-full rounded-xl border border-slate-700 bg-slate-900/80 px-3.5 py-2.5 text-sm text-slate-200 focus:border-indigo-500 focus:outline-none"
                         />
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Subject</label>
+                    <label
+                        class="mb-2 block text-xs font-semibold tracking-wider text-slate-400 uppercase"
+                        >Subject</label
+                    >
                     <input
                         v-model="form.subject"
                         type="text"
                         required
                         placeholder="Inquiry regarding bare-metal servers..."
-                        class="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+                        class="w-full rounded-xl border border-slate-700 bg-slate-900/80 px-3.5 py-2.5 text-sm text-slate-200 focus:border-indigo-500 focus:outline-none"
                     />
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Message</label>
+                    <label
+                        class="mb-2 block text-xs font-semibold tracking-wider text-slate-400 uppercase"
+                        >Message</label
+                    >
                     <textarea
                         v-model="form.message"
                         rows="5"
                         required
                         placeholder="Tell us what you need help with..."
-                        class="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+                        class="w-full rounded-xl border border-slate-700 bg-slate-900/80 px-3.5 py-2.5 text-sm text-slate-200 focus:border-indigo-500 focus:outline-none"
                     ></textarea>
                 </div>
 
                 <button
                     type="submit"
                     :disabled="form.processing"
-                    class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-indigo-600/20 transition-all disabled:opacity-50"
+                    class="w-full rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-500 disabled:opacity-50"
                 >
                     {{ form.processing ? 'Sending...' : 'Send Message' }}
                 </button>

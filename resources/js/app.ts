@@ -3,6 +3,7 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from 'ziggy-js';
+import AppFooter from '@/components/AppFooter.vue';
 import { initializeTheme } from '@/composables/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
@@ -13,7 +14,11 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
-    resolve: (name) => resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue')),
+    resolve: (name) =>
+        resolvePageComponent(
+            `./pages/${name}.vue`,
+            import.meta.glob<DefineComponent>('./pages/**/*.vue'),
+        ),
     layout: (name) => {
         switch (true) {
             case name === 'Welcome':
@@ -29,7 +34,13 @@ createInertiaApp({
         }
     },
     setup({ el, App, props, plugin }) {
-        createApp({ render: () => h(App, props) })
+        createApp({
+            render: () =>
+                h('div', { class: 'flex min-h-screen flex-col' }, [
+                    h('div', { class: 'flex-1' }, [h(App, props)]),
+                    h(AppFooter),
+                ]),
+        })
             .use(plugin)
             .use(ZiggyVue, (props.initialPage.props as any).ziggy)
             .mount(el);

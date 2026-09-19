@@ -24,30 +24,34 @@ defineProps<Props>();
 </script>
 
 <template>
-    <DropdownMenuLabel class="p-0 font-normal">
+    <DropdownMenuLabel class="p-0 font-normal text-slate-100">
         <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-            <UserInfo :user="user" :show-email="true" />
+            <UserInfo :user="user" :show-email="true" email-label="Profile" />
         </div>
     </DropdownMenuLabel>
-    <DropdownMenuSeparator />
+    <DropdownMenuSeparator class="bg-slate-800" />
     <DropdownMenuGroup>
         <DropdownMenuItem :as-child="true">
-            <Link class="block w-full cursor-pointer" :href="edit()" prefetch>
-                <Settings class="mr-2 h-4 w-4" />
+            <Link
+                class="block w-full cursor-pointer text-slate-300 focus:bg-slate-800 focus:text-white"
+                :href="edit()"
+                prefetch
+            >
+                <Settings class="mr-2 h-4 w-4 text-slate-400" />
                 Settings
             </Link>
         </DropdownMenuItem>
     </DropdownMenuGroup>
-    <DropdownMenuSeparator />
+    <DropdownMenuSeparator class="bg-slate-800" />
     <DropdownMenuItem :as-child="true">
         <Link
-            class="block w-full cursor-pointer"
+            class="block w-full cursor-pointer text-rose-300 focus:bg-rose-500/10 focus:text-rose-200"
             :href="logout()"
             @click="handleLogout"
             as="button"
             data-test="logout-button"
         >
-            <LogOut class="mr-2 h-4 w-4" />
+            <LogOut class="mr-2 h-4 w-4 text-rose-400" />
             Log out
         </Link>
     </DropdownMenuItem>
