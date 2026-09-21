@@ -7,6 +7,22 @@ import { bunny } from 'laravel-vite-plugin/fonts';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+    server: {
+        host: '127.0.0.1',
+        hmr: {
+            host: '127.0.0.1',
+        },
+        watch: {
+            // Prevent generated route files from triggering Vite HMR / page reloads
+            ignored: ['**/resources/js/types/wayfinder.d.ts', '**/resources/js/routes/**',
+                '**/storage/**',
+                '**/bootstrap/cache/**',
+                '**/vendor/**',
+                '**/resources/js/types/**',
+                '**/resources/js/routes/**'
+            ],
+        },
+    },
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.ts'],

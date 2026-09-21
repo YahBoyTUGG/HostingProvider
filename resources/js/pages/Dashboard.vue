@@ -22,10 +22,14 @@ const props = defineProps({
 const processingPowerId = ref(null);
 const processingCancelId = ref(null);
 
+// Modal state
+const isCancelModalOpen = ref(false);
+const selectedSubForCancel = ref<any>(null);
+
 const togglePower = (subscriptionId: number) => {
     processingPowerId.value = subscriptionId;
     router.post(
-        route('subscriptions.toggle-power', subscriptionId),
+        `/subscriptions/${subscriptionId}/toggle-power`,
         {},
         {
             preserveScroll: true,
@@ -34,22 +38,45 @@ const togglePower = (subscriptionId: number) => {
     );
 };
 
-const cancelSubscription = (subscriptionId: number) => {
-    if (
-        confirm(
-            'Are you sure you want to cancel this subscription? The server will be stopped immediately.',
-        )
-    ) {
-        processingCancelId.value = subscriptionId;
-        router.post(
-            route('subscriptions.cancel', subscriptionId),
-            {},
-            {
-                preserveScroll: true,
-                onFinish: () => (processingCancelId.value = null),
+// Open the custom cancellation modal
+const openCancelModal = (sub: any) => {
+    selectedSubForCancel.value = sub;
+    isCancelModalOpen.value = true;
+};
+
+// Close modal & reset selection
+const closeCancelModal = () => {
+    if (processingCancelId.value) return; // Prevent closing while request is in flight
+    isCancelModalOpen.value = false;
+    selectedSubForCancel.value = null;
+};
+
+// Confirm cancellation request
+const confirmCancelSubscription = () => {
+    if (!selectedSubForCancel.value) return;
+
+    const subscriptionId = selectedSubForCancel.value.id;
+    processingCancelId.value = subscriptionId;
+
+    router.post(
+        `/subscriptions/${subscriptionId}/cancel`,
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                processingCancelId.value = null;
+                isCancelModalOpen.value = false;
+                selectedSubForCancel.value = null;
+                // closeCancelModal();
             },
-        );
-    }
+            onError: () => {
+                processingCancelId.value = null;
+            },
+            onFinish: () => {
+                processingCancelId.value = null;
+            },
+        },
+    );
 };
 </script>
 
@@ -58,7 +85,7 @@ const cancelSubscription = (subscriptionId: number) => {
 
     <div class="min-h-screen bg-slate-900 font-sans text-slate-100">
         <SiteHeader />
-        <span>{{ $page.props.flash.success }}</span>
+        <span>{{ $page.props.flash?.success }}</span>
 
         <main class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
             <!-- Dashboard Overview Stats -->
@@ -124,7 +151,7 @@ const cancelSubscription = (subscriptionId: number) => {
             </div>
 
             <!-- Active Virtual Machines Section -->
-            <section class="space-y-4">
+            <section class="mt-12 space-y-4">
                 <div class="flex items-center justify-between">
                     <h2 class="text-xl font-bold text-white">
                         Active Provisioned Servers
@@ -220,8 +247,7 @@ const cancelSubscription = (subscriptionId: number) => {
                                 </button>
 
                                 <button
-                                    @click="cancelSubscription(sub.id)"
-                                    :disabled="processingCancelId === sub.id"
+                                    @click="openCancelModal(sub)"
                                     class="rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-400 transition-all hover:bg-rose-500/20"
                                 >
                                     Cancel Plan
@@ -310,7 +336,7 @@ const cancelSubscription = (subscriptionId: number) => {
             </section>
 
             <!-- Subscription History Table -->
-            <section class="space-y-4 pt-4">
+            <section class="mt-12 space-y-4 pt-4">
                 <h2 class="text-xl font-bold text-white">
                     Billing & Subscription History
                 </h2>
@@ -362,7 +388,11 @@ const cancelSubscription = (subscriptionId: number) => {
                                         item.ends_at
                                             ? new Date(
                                                   item.ends_at,
-                                              ).toLocaleDateString()
+                                              ).toLocaleDateString('en-GB', {
+                                                  day: '2-digit',
+                                                  month: '2-digit',
+                                                  year: 'numeric',
+                                              })
                                             : 'N/A'
                                     }}
                                 </td>
@@ -372,5 +402,134 @@ const cancelSubscription = (subscriptionId: number) => {
                 </div>
             </section>
         </main>
+
+        <!-- Custom Cancellation Modal -->
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transition duration-200 ease-out"
+                enter-from-class="opacity-0"
+                enter-to-class="opacity-100"
+                leave-active-class="transition duration-150 ease-in"
+                leave-from-class="opacity-100"
+                leave-to-class="opacity-0"
+            >
+                <div
+                    v-if="isCancelModalOpen"
+                    class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                >
+                    <!-- Backdrop -->
+                    <div
+                        class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm"
+                        @click="closeCancelModal"
+                    ></div>
+
+                    <!-- Modal Box -->
+                    <div
+                        class="relative w-full max-w-md rounded-2xl border border-slate-700/80 bg-slate-900 p-6 shadow-2xl transition-all"
+                    >
+                        <!-- Modal Header -->
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="flex h-10 w-10 items-center justify-center rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-400"
+                                >
+                                    <svg
+                                        class="h-5 w-5"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                                        />
+                                    </svg>
+                                </div>
+                                <h3 class="text-lg font-bold text-white">
+                                    Cancel Subscription
+                                </h3>
+                            </div>
+                            <button
+                                @click="closeCancelModal"
+                                class="rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+                            >
+                                &#x2715;
+                            </button>
+                        </div>
+
+                        <!-- Modal Body Details -->
+                        <div class="mt-4 space-y-4 text-sm text-slate-300">
+                            <p>
+                                Are you sure you want to cancel this plan? The server instance will be terminated immediately.
+                            </p>
+
+                            <div
+                                v-if="selectedSubForCancel"
+                                class="space-y-2 rounded-xl border border-slate-800 bg-slate-950/60 p-4"
+                            >
+                                <div class="flex justify-between border-b border-slate-800/80 pb-2">
+                                    <span class="text-xs text-slate-400">Hostname:</span>
+                                    <span class="font-mono text-xs font-semibold text-white">
+                                        {{ selectedSubForCancel.virtual_machine?.name ?? 'N/A' }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between border-b border-slate-800/80 pb-2">
+                                    <span class="text-xs text-slate-400">Plan Offer:</span>
+                                    <span class="font-medium text-white">
+                                        {{ selectedSubForCancel.server_offer?.name }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-xs text-slate-400">Current Status:</span>
+                                    <span
+                                        class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold capitalize"
+                                        :class="
+                                            selectedSubForCancel.virtual_machine?.status === 'running'
+                                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                                : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                                        "
+                                    >
+                                        <span
+                                            class="h-1.5 w-1.5 rounded-full"
+                                            :class="
+                                                selectedSubForCancel.virtual_machine?.status === 'running'
+                                                    ? 'bg-emerald-400 animate-pulse'
+                                                    : 'bg-rose-400'
+                                            "
+                                        ></span>
+                                        {{ selectedSubForCancel.virtual_machine?.status || 'provisioning' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal Actions -->
+                        <div class="mt-6 flex items-center justify-end gap-3">
+                            <button
+                                @click="closeCancelModal"
+                                :disabled="!!processingCancelId"
+                                class="rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 transition-all hover:bg-slate-700 hover:text-white disabled:opacity-50"
+                            >
+                                Keep Plan
+                            </button>
+                            <button
+                                @click="confirmCancelSubscription"
+                                :disabled="!!processingCancelId"
+                                class="flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-rose-600/30 transition-all hover:bg-rose-500 disabled:opacity-50"
+                            >
+                                <span
+                                    v-if="processingCancelId === selectedSubForCancel?.id"
+                                    class="animate-spin"
+                                    >...</span
+                                >
+                                <span>Confirm Cancellation</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
     </div>
 </template>

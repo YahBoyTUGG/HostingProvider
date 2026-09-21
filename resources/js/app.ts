@@ -50,14 +50,8 @@ createInertiaApp({
     },
 });
 
-// Guard browser APIs so SSR execution does not fail
+// Guard browser APIs so SSR execution does not fail.
 if (typeof window !== 'undefined') {
     initializeTheme();
     initializeFlashToast();
 }
-
-// This will set light / dark mode on page load...
-initializeTheme();
-
-// This will listen for flash toast data from the server...
-initializeFlashToast();

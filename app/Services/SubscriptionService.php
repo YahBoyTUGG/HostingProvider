@@ -14,9 +14,9 @@ class SubscriptionService
     /**
      * Handle purchasing a server offer and provisioning a simulated VM.
      */
-    public function create_subscription(User $user, ServerOffer $offer, int $osId, string $cycle, array $app_ids = []): Subscription
+    public function create_subscription(User $user, ServerOffer $offer, int $osId, string $cycle, string $machineName, array $app_ids = []): Subscription
     {
-        return DB::transaction(function () use ($user, $offer, $osId, $cycle, $app_ids) {
+        return DB::transaction(function () use ($user, $offer, $osId, $cycle, $machineName, $app_ids) {
             $durationMonths = match($cycle) {
                 'monthly' => 1,
                 '6_months' => 6,
@@ -46,7 +46,7 @@ class SubscriptionService
             $vm = VirtualMachine::create([
                 'subscription_id' => $subscription->id,
                 'operating_system_id' => $osId,
-                'name' => strtolower(Str::slug($offer->name)) . '-' . Str::random(5),
+                'name' => $machineName,
                 'ip_address' => rand(11, 199) . '.' . rand(0, 255) . '.' . rand(0, 255) . '.' . rand(1, 254),
                 'ssh_port' => 22,
                 'ssh_user' => 'root',
@@ -71,7 +71,9 @@ class SubscriptionService
         DB::transaction(function () use ($subscription) {
             $subscription->update(['status' => 'cancelled']);
             if ($subscription->virtualMachine) {
-                $subscription->virtualMachine->update(['status' => 'stopped']);
+                $subscription->virtualMachine->preinstalledApps()->detach();
+
+                $subscription->virtualMachine->delete();
             }
         });
     }

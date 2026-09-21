@@ -86,6 +86,19 @@ const displayName = computed(() => {
                     Dashboard
                 </Link>
 
+                <Link
+                    v-if="user?.role === 'admin'"
+                    href="/admin/dashboard"
+                    :class="[
+                        'transition-colors hover:text-slate-100',
+                        isCurrentOrParentUrl('/admin/dashboard')
+                            ? activeNavClasses
+                            : 'text-slate-400',
+                    ]"
+                >
+                    Admin Dashboard
+                </Link>
+
                 <span
                     v-if="user"
                     class="h-6 border-l border-slate-700"

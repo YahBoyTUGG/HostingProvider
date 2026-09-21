@@ -3,7 +3,7 @@ import { Head, router, useForm } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
 import SiteHeader from '@/components/SiteHeader.vue';
 
-type Tab = 'users' | 'offers' | 'contacts' | 'tickets';
+type Tab = 'users' | 'offers' | 'featured' | 'contacts' | 'tickets';
 type ViewMode = 'list' | 'create';
 
 interface User {
@@ -32,6 +32,16 @@ interface Offer {
     country: string;
     city: string;
     is_active: boolean;
+}
+
+interface FeaturedOffer {
+    id: number;
+    server_offer_id: number;
+    badge: string | null;
+    button_text: string;
+    sort_order: number;
+    is_highlighted: boolean;
+    server_offer: Offer;
 }
 
 interface Contact {
@@ -67,6 +77,7 @@ interface Ticket {
 const props = defineProps<{
     users: User[];
     offers: Offer[];
+    featuredOffers: FeaturedOffer[];
     contacts: Contact[];
     tickets: Ticket[];
 }>();
@@ -76,11 +87,18 @@ const activeView = ref<ViewMode>('list');
 const search = reactive<Record<Tab, string>>({
     users: '',
     offers: '',
+    featured: '',
     contacts: '',
     tickets: '',
 });
 const userRoleFilter = ref<'all' | 'user' | 'admin'>('all');
 const offerTypeFilter = ref<'all' | 'vps' | 'dedicated'>('all');
+const featuredHighlightFilter = ref<'all' | 'highlighted' | 'standard'>('all');
+const featuredSortOrderFilter = ref<number | ''>('');
+const editingFeatureId = ref<number | null>(null);
+const isFeatureModalOpen = ref(false);
+const availableFeatureSearch = ref('');
+const availableFeatureTypeFilter = ref<'all' | 'vps' | 'dedicated'>('all');
 const contactReadFilter = ref<'all' | 'unread' | 'read'>('all');
 const ticketStatusFilter = ref<'all' | 'open' | 'answered' | 'closed'>('all');
 const ticketPriorityFilter = ref<'all' | 'low' | 'normal' | 'high'>('all');
@@ -143,6 +161,36 @@ const filteredOffers = computed(() =>
         );
     }),
 );
+const filteredFeaturedOffers = computed(() =>
+    props.featuredOffers.filter((feature) => {
+        const query = search.featured.toLowerCase();
+
+        return (
+            feature.server_offer.name.toLowerCase().includes(query) &&
+            (featuredSortOrderFilter.value === '' ||
+                feature.sort_order === Number(featuredSortOrderFilter.value)) &&
+            (featuredHighlightFilter.value === 'all' ||
+                (featuredHighlightFilter.value === 'highlighted' &&
+                    feature.is_highlighted) ||
+                (featuredHighlightFilter.value === 'standard' &&
+                    !feature.is_highlighted))
+        );
+    }),
+);
+const availableFeaturedOffers = computed(() => {
+    const featuredIds = new Set(
+        props.featuredOffers.map((feature) => feature.server_offer_id),
+    );
+    const query = availableFeatureSearch.value.toLowerCase();
+
+    return props.offers.filter(
+        (offer) =>
+            !featuredIds.has(offer.id) &&
+            (availableFeatureTypeFilter.value === 'all' ||
+                offer.type === availableFeatureTypeFilter.value) &&
+            offer.name.toLowerCase().includes(query),
+    );
+});
 const filteredContacts = computed(() =>
     props.contacts.filter((contact) => {
         const query = search.contacts.toLowerCase();
@@ -228,6 +276,20 @@ const emptyOffer = (): Record<string, string | number | boolean | null> => ({
 const offerForm = reactive(emptyOffer());
 const editingOfferId = ref<number | null>(null);
 const responseForms = reactive<Record<number, string>>({});
+const featureForm = reactive({
+    server_offer_id: 0,
+    badge: '',
+    button_text: 'Deploy Rig',
+    sort_order: 0,
+    is_highlighted: false,
+});
+const newFeatureForm = reactive({
+    server_offer_id: 0,
+    badge: '',
+    button_text: 'Deploy Rig',
+    sort_order: 0,
+    is_highlighted: false,
+});
 
 const submitUser = () => {
     createUserForm.post('/admin/users', {
@@ -266,6 +328,67 @@ const resetOffer = () => {
 const deleteOffer = (offer: Offer) => {
     if (window.confirm(`Delete the ${offer.name} offer?`))
         router.delete(`/admin/offers/${offer.id}`);
+};
+
+const editFeaturedOffer = (feature: FeaturedOffer) => {
+    editingFeatureId.value = feature.id;
+    Object.assign(featureForm, {
+        server_offer_id: feature.server_offer_id,
+        badge: feature.badge ?? '',
+        button_text: feature.button_text,
+        sort_order: feature.sort_order,
+        is_highlighted: feature.is_highlighted,
+    });
+};
+
+const resetFeaturedOffer = () => {
+    editingFeatureId.value = null;
+    Object.assign(featureForm, {
+        server_offer_id: 0,
+        badge: '',
+        button_text: 'Deploy Rig',
+        sort_order: 0,
+        is_highlighted: false,
+    });
+};
+
+const updateFeaturedOffer = () => {
+    if (!editingFeatureId.value) return;
+
+    router.put(
+        `/admin/featured-offers/${editingFeatureId.value}`,
+        featureForm,
+        { onSuccess: resetFeaturedOffer },
+    );
+};
+
+const openFeatureModal = () => {
+    availableFeatureSearch.value = '';
+    availableFeatureTypeFilter.value = 'all';
+    newFeatureForm.server_offer_id = 0;
+    isFeatureModalOpen.value = true;
+};
+
+const closeFeatureModal = () => {
+    isFeatureModalOpen.value = false;
+};
+
+const createFeaturedOffer = () => {
+    if (!newFeatureForm.server_offer_id) return;
+
+    router.post('/admin/featured-offers', newFeatureForm, {
+        onSuccess: closeFeatureModal,
+    });
+};
+
+const deleteFeaturedOffer = (feature: FeaturedOffer) => {
+    if (
+        window.confirm(
+            `Remove ${feature.server_offer.name} from featured offers?`,
+        )
+    ) {
+        router.delete(`/admin/featured-offers/${feature.id}`);
+    }
 };
 
 const markRead = (contact: Contact) =>
@@ -313,6 +436,7 @@ const closeTicket = (ticket: Ticket) => {
                     v-for="tab in [
                         'users',
                         'offers',
+                        'featured',
                         'contacts',
                         'tickets',
                     ] as Tab[]"
@@ -804,6 +928,362 @@ const closeTicket = (ticket: Ticket) => {
                         </button>
                     </div>
                 </form>
+            </section>
+
+            <section v-else-if="activeTab === 'featured'" class="space-y-4">
+                <div class="flex flex-wrap gap-3">
+                    <input
+                        v-model="search.featured"
+                        placeholder="Search featured offer names..."
+                        class="admin-input min-w-64 flex-1"
+                    />
+                    <select
+                        v-model="featuredHighlightFilter"
+                        class="admin-input w-44"
+                    >
+                        <option value="all">All highlight states</option>
+                        <option value="highlighted">Highlighted</option>
+                        <option value="standard">Not highlighted</option>
+                    </select>
+                    <input
+                        v-model="featuredSortOrderFilter"
+                        type="number"
+                        min="0"
+                        placeholder="Sort order"
+                        class="admin-input w-36"
+                    />
+                </div>
+                <p class="text-xs text-slate-500">
+                    {{ filteredFeaturedOffers.length }} featured offers found
+                </p>
+
+                <div
+                    v-if="isFeatureModalOpen"
+                    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="new-featured-offer-title"
+                    @click.self="closeFeatureModal"
+                >
+                    <form
+                        class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl shadow-black/50"
+                        @submit.prevent="createFeaturedOffer"
+                    >
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <h2
+                                    id="new-featured-offer-title"
+                                    class="text-xl font-semibold text-white"
+                                >
+                                    Add featured offer
+                                </h2>
+                                <p class="mt-1 text-sm text-slate-400">
+                                    Choose an offer that is not featured yet.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                class="text-2xl leading-none text-slate-400 hover:text-white"
+                                aria-label="Close dialog"
+                                @click="closeFeatureModal"
+                            >
+                                &times;
+                            </button>
+                        </div>
+
+                        <div class="mt-6 flex flex-wrap gap-3">
+                            <input
+                                v-model="availableFeatureSearch"
+                                placeholder="Search regular offers by name..."
+                                class="admin-input min-w-64 flex-1"
+                            />
+                            <select
+                                v-model="availableFeatureTypeFilter"
+                                class="admin-input w-40"
+                            >
+                                <option value="all">All types</option>
+                                <option value="vps">VPS</option>
+                                <option value="dedicated">Dedicated</option>
+                            </select>
+                        </div>
+
+                        <div class="mt-4 space-y-2">
+                            <button
+                                v-for="offer in availableFeaturedOffers"
+                                :key="offer.id"
+                                type="button"
+                                class="flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition"
+                                :class="
+                                    newFeatureForm.server_offer_id === offer.id
+                                        ? 'border-indigo-400 bg-indigo-500/15 text-white'
+                                        : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:border-slate-600'
+                                "
+                                @click="
+                                    newFeatureForm.server_offer_id = offer.id
+                                "
+                            >
+                                <span>
+                                    <span class="block font-semibold">{{
+                                        offer.name
+                                    }}</span>
+                                    <span
+                                        class="mt-1 block text-xs text-slate-500"
+                                    >
+                                        {{ offer.type }} · {{ offer.city }},
+                                        {{ offer.country }}
+                                    </span>
+                                </span>
+                                <span class="text-xs text-slate-500">
+                                    {{ offer.cpu_cores }} cores ·
+                                    {{ offer.ram_gb }} GB RAM
+                                </span>
+                            </button>
+                            <p
+                                v-if="!availableFeaturedOffers.length"
+                                class="rounded-xl border border-dashed border-slate-700 p-6 text-center text-sm text-slate-400"
+                            >
+                                No regular offers match these filters.
+                            </p>
+                        </div>
+
+                        <div class="mt-6 grid grid-cols-2 gap-3">
+                            <div>
+                                <label
+                                    for="new-featured-badge"
+                                    class="admin-label"
+                                    >Badge</label
+                                >
+                                <input
+                                    id="new-featured-badge"
+                                    v-model="newFeatureForm.badge"
+                                    placeholder="Most Popular"
+                                    class="admin-input w-full"
+                                />
+                            </div>
+                            <div>
+                                <label
+                                    for="new-featured-button"
+                                    class="admin-label"
+                                    >Button text</label
+                                >
+                                <input
+                                    id="new-featured-button"
+                                    v-model="newFeatureForm.button_text"
+                                    required
+                                    class="admin-input w-full"
+                                />
+                            </div>
+                            <div>
+                                <label
+                                    for="new-featured-sort-order"
+                                    class="admin-label"
+                                    >Sort order</label
+                                >
+                                <input
+                                    id="new-featured-sort-order"
+                                    v-model="newFeatureForm.sort_order"
+                                    required
+                                    type="number"
+                                    min="0"
+                                    class="admin-input w-full"
+                                />
+                            </div>
+                            <label
+                                class="flex items-center gap-2 self-end pb-2 text-sm text-slate-300"
+                            >
+                                <input
+                                    v-model="newFeatureForm.is_highlighted"
+                                    type="checkbox"
+                                />
+                                Highlight this offer
+                            </label>
+                        </div>
+
+                        <div class="mt-6 flex justify-end gap-3">
+                            <button
+                                type="button"
+                                class="admin-secondary"
+                                @click="closeFeatureModal"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                class="admin-button"
+                                :disabled="!newFeatureForm.server_offer_id"
+                            >
+                                Create featured offer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <form
+                    v-if="editingFeatureId"
+                    class="grid max-w-3xl grid-cols-2 gap-3 rounded-xl border border-indigo-400/30 bg-slate-900 p-5"
+                    @submit.prevent="updateFeaturedOffer"
+                >
+                    <h2 class="col-span-2 font-semibold text-white">
+                        Edit featured offer
+                    </h2>
+                    <div class="col-span-2">
+                        <label for="featured-offer" class="admin-label"
+                            >Offer</label
+                        >
+                        <select
+                            id="featured-offer"
+                            v-model="featureForm.server_offer_id"
+                            class="admin-input w-full"
+                            required
+                        >
+                            <option
+                                v-for="offer in offers"
+                                :key="offer.id"
+                                :value="offer.id"
+                            >
+                                {{ offer.name }}
+                            </option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="featured-badge" class="admin-label"
+                            >Badge</label
+                        >
+                        <input
+                            id="featured-badge"
+                            v-model="featureForm.badge"
+                            placeholder="Most Popular"
+                            class="admin-input w-full"
+                        />
+                    </div>
+                    <div>
+                        <label for="featured-button" class="admin-label"
+                            >Button text</label
+                        >
+                        <input
+                            id="featured-button"
+                            v-model="featureForm.button_text"
+                            required
+                            class="admin-input w-full"
+                        />
+                    </div>
+                    <div>
+                        <label for="featured-sort-order" class="admin-label"
+                            >Sort order</label
+                        >
+                        <input
+                            id="featured-sort-order"
+                            v-model="featureForm.sort_order"
+                            required
+                            type="number"
+                            min="0"
+                            class="admin-input w-full"
+                        />
+                    </div>
+                    <label
+                        for="featured-highlighted"
+                        class="flex items-center gap-2 text-sm text-slate-300"
+                    >
+                        <input
+                            id="featured-highlighted"
+                            v-model="featureForm.is_highlighted"
+                            type="checkbox"
+                        />
+                        Highlight this offer
+                    </label>
+                    <div class="col-span-2 flex gap-3">
+                        <button class="admin-button">Save changes</button>
+                        <button
+                            type="button"
+                            class="admin-secondary"
+                            @click="resetFeaturedOffer"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+
+                <div class="space-y-3">
+                    <article
+                        v-for="feature in filteredFeaturedOffers"
+                        :key="feature.id"
+                        class="rounded-xl border border-slate-800 bg-slate-900 p-5"
+                    >
+                        <div
+                            class="flex flex-wrap items-start justify-between gap-4"
+                        >
+                            <div>
+                                <h2 class="font-semibold text-white">
+                                    {{ feature.server_offer.name }}
+                                </h2>
+                                <p class="mt-1 text-sm text-slate-400">
+                                    {{ feature.server_offer.type }} ·
+                                    {{ feature.server_offer.city }},
+                                    {{ feature.server_offer.country }}
+                                </p>
+                            </div>
+                            <div
+                                class="flex flex-wrap items-center gap-2 text-xs"
+                            >
+                                <span
+                                    class="rounded-full bg-slate-800 px-2.5 py-1 text-slate-300"
+                                >
+                                    Order {{ feature.sort_order }}
+                                </span>
+                                <span
+                                    class="rounded-full px-2.5 py-1"
+                                    :class="
+                                        feature.is_highlighted
+                                            ? 'bg-indigo-400/10 text-indigo-300'
+                                            : 'bg-slate-800 text-slate-400'
+                                    "
+                                >
+                                    {{
+                                        feature.is_highlighted
+                                            ? 'Highlighted'
+                                            : 'Standard'
+                                    }}
+                                </span>
+                            </div>
+                        </div>
+                        <div
+                            class="mt-4 flex flex-wrap items-center justify-between gap-3"
+                        >
+                            <p class="text-sm text-slate-400">
+                                {{ feature.badge || 'No badge' }} ·
+                                {{ feature.button_text }}
+                            </p>
+                            <div class="flex gap-3">
+                                <button
+                                    type="button"
+                                    class="text-sm text-indigo-300 hover:text-indigo-200"
+                                    @click="editFeaturedOffer(feature)"
+                                >
+                                    Edit
+                                </button>
+                                <button
+                                    type="button"
+                                    class="text-sm text-rose-300 hover:text-rose-200"
+                                    @click="deleteFeaturedOffer(feature)"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+                <p v-if="!filteredFeaturedOffers.length" class="text-slate-400">
+                    No featured offers match the current filter.
+                </p>
+
+                <button
+                    type="button"
+                    class="admin-button w-full py-4 text-base"
+                    @click="openFeatureModal"
+                    >
+                    New feature
+                </button>
+
             </section>
 
             <section v-else-if="activeTab === 'contacts'" class="space-y-3">

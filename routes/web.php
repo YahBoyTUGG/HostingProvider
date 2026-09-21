@@ -1,15 +1,15 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\CatalogController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\RegisteredUserController;
+use App\Http\Controllers\SupportTicketController;
+use App\Http\Controllers\UserDashboardController;
+use App\Models\Features;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Http\Controllers\RegisteredUserController;
-use App\Http\Controllers\CheckoutController;
-use App\Http\Controllers\UserDashboardController;
-use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\SupportTicketController;
-use App\Http\Controllers\CatalogController;
-use App\Http\Controllers\ContactController;
-use App\Models\Features;
 
 // Guest Authentication Routes (Inertia Pages)
 Route::middleware('guest')->group(function () {
@@ -46,7 +46,7 @@ Route::post('/contact', [ContactController::class, 'store'])->name('contact.stor
 Route::middleware(['auth'])->group(function () {
     // User Dashboard
     Route::get('/dashboard', [UserDashboardController::class, 'index'])->name('dashboard');
-    Route::post('/subscriptions/{subscription}/toggle-power', [UserDashboardController::class, 'togglePower'])->name('subscriptions.toggle-power');
+    Route::post('/subscriptions/{subscription}/toggle-power', [UserDashboardController::class, 'toggle_power'])->name('subscriptions.toggle-power');
     Route::post('/subscriptions/{subscription}/cancel', [UserDashboardController::class, 'cancel'])->name('subscriptions.cancel');
 
     // Checkout
@@ -72,6 +72,9 @@ Route::middleware(['auth', 'can:admin'])->prefix('admin')->name('admin.')->group
     Route::post('/offers', [AdminDashboardController::class, 'store_offer'])->name('offers.store');
     Route::put('/offers/{offer}', [AdminDashboardController::class, 'update_offer'])->name('offers.update');
     Route::delete('/offers/{offer}', [AdminDashboardController::class, 'destroy_offer'])->name('offers.destroy');
+    Route::post('/featured-offers', [AdminDashboardController::class, 'store_feature'])->name('featured-offers.store');
+    Route::put('/featured-offers/{feature}', [AdminDashboardController::class, 'update_feature'])->name('featured-offers.update');
+    Route::delete('/featured-offers/{feature}', [AdminDashboardController::class, 'destroy_feature'])->name('featured-offers.destroy');
     Route::post('/contacts/{contact}/read', [AdminDashboardController::class, 'mark_contact_read'])->name('contacts.read');
     Route::post('/tickets/{ticket}/reply', [AdminDashboardController::class, 'reply_to_ticket'])->name('tickets.reply');
     Route::post('/tickets/{ticket}/close', [AdminDashboardController::class, 'close_ticket'])->name('tickets.close');

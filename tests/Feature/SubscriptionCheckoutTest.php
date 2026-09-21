@@ -45,8 +45,13 @@ class SubscriptionCheckoutTest extends TestCase
         // 2. Act: Execute POST request to checkout route
         $response = $this->actingAs($user)->post(route('checkout.store', $offer->id), [
             'operating_system_id' => $os->id,
+            'machine_name' => 'test-machine-01',
             'billing_cycle' => 'monthly',
             'apps' => [$app->id],
+            'cardholder_name' => 'Test User',
+            'card_number' => '4242 4242 4242 4242',
+            'card_expiry' => '12/30',
+            'card_cvc' => '123',
         ]);
 
         // 3. Assert: Database records created successfully
@@ -60,7 +65,28 @@ class SubscriptionCheckoutTest extends TestCase
 
         $this->assertDatabaseHas('virtual_machines', [
             'operating_system_id' => $os->id,
+            'name' => 'test-machine-01',
             'status' => 'running',
         ]);
+    }
+
+    public function test_guest_is_redirected_to_sign_in_before_checkout(): void
+    {
+        $offer = ServerOffer::create([
+            'name' => 'Guest Checkout VPS',
+            'type' => 'vps',
+            'ram_gb' => 2,
+            'cpu_cores' => 1,
+            'storage_amount_gb' => 20,
+            'storage_type' => 'NVMe SSD',
+            'bandwidth_tb' => 1,
+            'price_monthly' => 10.00,
+            'price_1_year' => 100.00,
+            'country' => 'Germany',
+            'city' => 'Frankfurt',
+        ]);
+
+        $this->get(route('checkout.show', $offer))
+            ->assertRedirect(route('login'));
     }
 }

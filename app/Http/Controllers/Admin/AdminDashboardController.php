@@ -4,11 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
-use App\Models\User;
+use App\Models\Features;
 use App\Models\ServerOffer;
 use App\Models\Ticket;
-use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 
 class AdminDashboardController extends Controller
@@ -18,6 +19,7 @@ class AdminDashboardController extends Controller
         return Inertia::render('Admin/Dashboard', [
             'users' => User::latest()->get(),
             'offers' => ServerOffer::latest()->get(),
+            'featuredOffers' => Features::with('server_offer')->orderBy('sort_order')->get(),
             'contacts' => Contact::latest()->get(),
             'tickets' => Ticket::with([
                 'user',
@@ -30,6 +32,7 @@ class AdminDashboardController extends Controller
     public function promote_user(User $user)
     {
         $user->update(['role' => 'admin']);
+
         return back()->with('success', 'User promoted to admin.');
     }
 
@@ -74,12 +77,13 @@ class AdminDashboardController extends Controller
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'email' => 'required|email|unique:users,email,'.$user->id,
             'living_address' => 'required|string',
             'phone_number' => 'required|string',
         ]);
 
         $user->update($validated);
+
         return back()->with('success', 'User profile updated.');
     }
 
@@ -88,6 +92,7 @@ class AdminDashboardController extends Controller
         $validated = $this->validateOffer($request);
 
         ServerOffer::create($validated);
+
         return back()->with('success', 'Server offer created.');
     }
 
@@ -101,7 +106,37 @@ class AdminDashboardController extends Controller
     public function destroy_offer(ServerOffer $offer)
     {
         $offer->delete();
+
         return back()->with('success', 'Offer deleted.');
+    }
+
+    public function update_feature(Request $request, Features $feature)
+    {
+        $feature->update($this->validateFeature($request));
+
+        return back()->with('success', 'Featured offer updated.');
+    }
+
+    public function store_feature(Request $request)
+    {
+        $validated = $this->validateFeature($request);
+
+        abort_if(
+            Features::where('server_offer_id', $validated['server_offer_id'])->exists(),
+            422,
+            'This offer is already featured.',
+        );
+
+        Features::create($validated);
+
+        return back()->with('success', 'Featured offer created.');
+    }
+
+    public function destroy_feature(Features $feature)
+    {
+        $feature->delete();
+
+        return back()->with('success', 'Featured offer removed.');
     }
 
     public function mark_contact_read(Contact $contact)
@@ -152,6 +187,17 @@ class AdminDashboardController extends Controller
             'country' => 'required|string|max:255',
             'city' => 'required|string|max:255',
             'is_active' => 'sometimes|boolean',
+        ]);
+    }
+
+    private function validateFeature(Request $request): array
+    {
+        return $request->validate([
+            'server_offer_id' => 'required|exists:server_offers,id',
+            'badge' => 'nullable|string|max:255',
+            'button_text' => 'required|string|max:255',
+            'sort_order' => 'required|integer|min:0',
+            'is_highlighted' => 'sometimes|boolean',
         ]);
     }
 }

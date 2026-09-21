@@ -10,6 +10,10 @@ class OperatingSystem extends Model
 {
     use HasFactory;
 
+    protected $appends = [
+        'full_name',
+    ];
+
     protected $fillable = [
         'name',
         'version',
