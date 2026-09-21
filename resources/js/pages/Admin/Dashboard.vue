@@ -3,7 +3,14 @@ import { Head, router, useForm } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
 import SiteHeader from '@/components/SiteHeader.vue';
 
-type Tab = 'users' | 'offers' | 'featured' | 'contacts' | 'tickets';
+type Tab =
+    | 'users'
+    | 'offers'
+    | 'featured'
+    | 'subscriptions'
+    | 'virtual-machines'
+    | 'contacts'
+    | 'tickets';
 type ViewMode = 'list' | 'create';
 
 interface User {
@@ -74,12 +81,44 @@ interface Ticket {
     messages: Message[];
 }
 
+interface Subscription {
+    id: number;
+    billing_cycle: string;
+    cost: number | string;
+    status: 'active' | 'cancelled' | 'expired';
+    starts_at: string;
+    ends_at: string;
+    user?: User | null;
+    server_offer?: { name: string } | null;
+}
+
+interface OperatingSystem {
+    id: number;
+    name: string;
+    version: string;
+}
+
+interface VirtualMachine {
+    id: number;
+    name: string;
+    ip_address: string;
+    status: 'running' | 'stopped' | 'provisioning';
+    operating_system?: OperatingSystem | null;
+    subscription?: {
+        user?: User | null;
+        server_offer?: { name: string } | null;
+    } | null;
+}
+
 const props = defineProps<{
     users: User[];
     offers: Offer[];
     featuredOffers: FeaturedOffer[];
     contacts: Contact[];
     tickets: Ticket[];
+    subscriptions: Subscription[];
+    virtualMachines: VirtualMachine[];
+    operatingSystems: OperatingSystem[];
 }>();
 
 const activeTab = ref<Tab>('users');
@@ -88,6 +127,8 @@ const search = reactive<Record<Tab, string>>({
     users: '',
     offers: '',
     featured: '',
+    subscriptions: '',
+    'virtual-machines': '',
     contacts: '',
     tickets: '',
 });
@@ -103,6 +144,12 @@ const contactReadFilter = ref<'all' | 'unread' | 'read'>('all');
 const ticketStatusFilter = ref<'all' | 'open' | 'answered' | 'closed'>('all');
 const ticketPriorityFilter = ref<'all' | 'low' | 'normal' | 'high'>('all');
 const ticketServiceFilter = ref('all');
+const subscriptionStatusFilter = ref<'all' | Subscription['status']>('all');
+const virtualMachineStatusFilter = ref<
+    'all' | VirtualMachine['status']
+>('all');
+const virtualMachineOperatingSystemFilter = ref<number | 'all'>('all');
+const virtualMachineUserFilter = ref('all');
 
 const toDateValue = new Date();
 const fromDateValue = new Date(toDateValue);
@@ -227,6 +274,46 @@ const filteredTickets = computed(() =>
                 .includes(query)
         );
     }),
+);
+const filteredSubscriptions = computed(() =>
+    props.subscriptions.filter((subscription) => {
+        const query = search.subscriptions.toLowerCase();
+        const userEmail = subscription.user?.email ?? '';
+
+        return (
+            (subscriptionStatusFilter.value === 'all' ||
+                subscription.status === subscriptionStatusFilter.value) &&
+            userEmail.toLowerCase().includes(query)
+        );
+    }),
+);
+const filteredVirtualMachines = computed(() =>
+    props.virtualMachines.filter((virtualMachine) => {
+        const query = search['virtual-machines'].toLowerCase();
+        const userEmail = virtualMachine.subscription?.user?.email ?? '';
+
+        return (
+            (virtualMachineStatusFilter.value === 'all' ||
+                virtualMachine.status === virtualMachineStatusFilter.value) &&
+            (virtualMachineOperatingSystemFilter.value === 'all' ||
+                virtualMachine.operating_system?.id ===
+                    virtualMachineOperatingSystemFilter.value) &&
+            (virtualMachineUserFilter.value === 'all' ||
+                userEmail === virtualMachineUserFilter.value) &&
+            `${virtualMachine.name} ${virtualMachine.ip_address} ${userEmail}`
+                .toLowerCase()
+                .includes(query)
+        );
+    }),
+);
+const virtualMachineUsers = computed(() =>
+    [
+        ...new Set(
+            props.virtualMachines
+                .map((virtualMachine) => virtualMachine.subscription?.user?.email)
+                .filter((email): email is string => Boolean(email)),
+        ),
+    ].sort(),
 );
 
 const ticketServices = computed(() =>
@@ -412,6 +499,36 @@ const closeTicket = (ticket: Ticket) => {
     if (window.confirm(`Close ticket #${ticket.id}?`))
         router.post(`/admin/tickets/${ticket.id}/close`);
 };
+
+const updateSubscriptionStatus = (subscription: Subscription) =>
+    router.put(`/admin/subscriptions/${subscription.id}/status`, {
+        status: subscription.status,
+    });
+
+const updateVirtualMachineStatus = (virtualMachine: VirtualMachine) =>
+    router.put(`/admin/virtual-machines/${virtualMachine.id}/status`, {
+        status: virtualMachine.status,
+    });
+
+const setSubscriptionStatus = (
+    subscription: Subscription,
+    status: Subscription['status'],
+) => {
+    if (subscription.status === status) return;
+    subscription.status = status;
+    router.put(`/admin/subscriptions/${subscription.id}/status`, { status });
+};
+
+const setVirtualMachineStatus = (
+    virtualMachine: VirtualMachine,
+    status: VirtualMachine['status'],
+) => {
+    if (virtualMachine.status === status) return;
+    virtualMachine.status = status;
+    router.put(`/admin/virtual-machines/${virtualMachine.id}/status`, { status });
+};
+
+
 </script>
 
 <template>
@@ -437,6 +554,8 @@ const closeTicket = (ticket: Ticket) => {
                         'users',
                         'offers',
                         'featured',
+                        'subscriptions',
+                        'virtual-machines',
                         'contacts',
                         'tickets',
                     ] as Tab[]"
@@ -1285,6 +1404,202 @@ const closeTicket = (ticket: Ticket) => {
                 </button>
 
             </section>
+
+            <section
+    v-else-if="activeTab === 'subscriptions'"
+    class="space-y-4"
+>
+    <div class="flex flex-wrap gap-3">
+        <input
+            v-model="search.subscriptions"
+            placeholder="Filter by user email..."
+            type="email"
+            class="admin-input min-w-64 flex-1"
+        />
+        <select
+            v-model="subscriptionStatusFilter"
+            class="admin-input w-44"
+        >
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="expired">Expired</option>
+        </select>
+    </div>
+    <p class="text-xs text-slate-500">
+        {{ filteredSubscriptions.length }} subscriptions found
+    </p>
+    <div class="space-y-3">
+        <article
+            v-for="subscription in filteredSubscriptions"
+            :key="subscription.id"
+            class="rounded-xl border border-slate-800 bg-slate-900 p-5"
+        >
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <p class="font-semibold text-white">
+                        {{ subscription.server_offer?.name ?? 'Subscription' }}
+                    </p>
+                    <p class="text-sm text-slate-400">
+                        {{ subscription.user?.email ?? 'Unknown user' }} ·
+                        {{ subscription.billing_cycle }} · ${{ subscription.cost }}
+                    </p>
+                    <p class="mt-1 text-xs text-slate-500">
+                        {{ new Date(subscription.starts_at).toLocaleDateString() }}
+                        to {{ new Date(subscription.ends_at).toLocaleDateString() }}
+                    </p>
+                </div>
+                <div class="inline-flex rounded-lg border border-slate-800 bg-slate-950 p-1">
+                    <button
+                        type="button"
+                        class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
+                        :class="
+                            subscription.status === 'active'
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                : 'text-slate-400 hover:text-slate-200'
+                        "
+                        @click="setSubscriptionStatus(subscription, 'active')"
+                    >
+                        Active
+                    </button>
+                    <button
+                        type="button"
+                        class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
+                        :class="
+                            subscription.status === 'cancelled'
+                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                : 'text-slate-400 hover:text-slate-200'
+                        "
+                        @click="setSubscriptionStatus(subscription, 'cancelled')"
+                    >
+                        Cancelled
+                    </button>
+                    <button
+                        type="button"
+                        class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
+                        :class="
+                            subscription.status === 'expired'
+                                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                                : 'text-slate-400 hover:text-slate-200'
+                        "
+                        @click="setSubscriptionStatus(subscription, 'expired')"
+                    >
+                        Expired
+                    </button>
+                </div>
+            </div>
+        </article>
+    </div>
+    <p v-if="!filteredSubscriptions.length" class="text-slate-400">
+        No subscriptions match the current filter.
+    </p>
+</section>
+
+            <section
+    v-else-if="activeTab === 'virtual-machines'"
+    class="space-y-4"
+>
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <input
+            v-model="search['virtual-machines']"
+            placeholder="Search machines..."
+            class="admin-input"
+        />
+        <select v-model="virtualMachineStatusFilter" class="admin-input">
+            <option value="all">All statuses</option>
+            <option value="running">Running</option>
+            <option value="stopped">Stopped</option>
+            <option value="provisioning">Provisioning</option>
+        </select>
+        <select
+            v-model="virtualMachineOperatingSystemFilter"
+            class="admin-input"
+        >
+            <option value="all">All operating systems</option>
+            <option
+                v-for="operatingSystem in props.operatingSystems"
+                :key="operatingSystem.id"
+                :value="operatingSystem.id"
+            >
+                {{ operatingSystem.name }} {{ operatingSystem.version }}
+            </option>
+        </select>
+        <!--
+        <select v-model="virtualMachineUserFilter" class="admin-input">
+            <option value="all">All users</option>
+            <option v-for="email in virtualMachineUsers" :key="email" :value="email">
+                {{ email }}
+            </option>
+        </select>
+        -->
+    </div>
+    <p class="text-xs text-slate-500">
+        {{ filteredVirtualMachines.length }} virtual machines found
+    </p>
+    <div class="space-y-3">
+        <article
+            v-for="virtualMachine in filteredVirtualMachines"
+            :key="virtualMachine.id"
+            class="rounded-xl border border-slate-800 bg-slate-900 p-5"
+        >
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <p class="font-semibold text-white">{{ virtualMachine.name }}</p>
+                    <p class="text-sm text-slate-400">
+                        {{ virtualMachine.ip_address }} ·
+                        {{ virtualMachine.operating_system?.name }}
+                        {{ virtualMachine.operating_system?.version }}
+                    </p>
+                    <p class="mt-1 text-xs text-slate-500">
+                        {{ virtualMachine.subscription?.user?.email ?? 'Unknown user' }} ·
+                        {{ virtualMachine.subscription?.server_offer?.name ?? 'Unknown offer' }}
+                    </p>
+                </div>
+                <div class="inline-flex rounded-lg border border-slate-800 bg-slate-950 p-1">
+                    <button
+                        type="button"
+                        class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
+                        :class="
+                            virtualMachine.status === 'running'
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                : 'text-slate-400 hover:text-slate-200'
+                        "
+                        @click="setVirtualMachineStatus(virtualMachine, 'running')"
+                    >
+                        Running
+                    </button>
+                    <button
+                        type="button"
+                        class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
+                        :class="
+                            virtualMachine.status === 'stopped'
+                                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                                : 'text-slate-400 hover:text-slate-200'
+                        "
+                        @click="setVirtualMachineStatus(virtualMachine, 'stopped')"
+                    >
+                        Stopped
+                    </button>
+                    <button
+                        type="button"
+                        class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
+                        :class="
+                            virtualMachine.status === 'provisioning'
+                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                : 'text-slate-400 hover:text-slate-200'
+                        "
+                        @click="setVirtualMachineStatus(virtualMachine, 'provisioning')"
+                    >
+                        Provisioning
+                    </button>
+                </div>
+            </div>
+        </article>
+    </div>
+    <p v-if="!filteredVirtualMachines.length" class="text-slate-400">
+        No virtual machines match the current filter.
+    </p>
+</section>
 
             <section v-else-if="activeTab === 'contacts'" class="space-y-3">
                 <div class="flex flex-wrap gap-3">

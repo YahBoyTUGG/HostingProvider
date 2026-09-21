@@ -64,6 +64,8 @@ Route::middleware(['auth'])->group(function () {
 // Admin Routes
 Route::middleware(['auth', 'can:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::put('/subscriptions/{subscription}/status', [AdminDashboardController::class, 'update_subscription_status'])->name('subscriptions.status');
+    Route::put('/virtual-machines/{virtualMachine}/status', [AdminDashboardController::class, 'update_virtual_machine_status'])->name('virtual-machines.status');
     Route::post('/users/{user}/promote', [AdminDashboardController::class, 'promote_user'])->name('users.promote');
     Route::post('/users/{user}/demote', [AdminDashboardController::class, 'demote_user'])->name('users.demote');
     Route::post('/users', [AdminDashboardController::class, 'store_user'])->name('users.store');

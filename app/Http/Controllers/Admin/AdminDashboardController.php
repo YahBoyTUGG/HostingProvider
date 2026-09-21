@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
 use App\Models\Features;
+use App\Models\OperatingSystem;
 use App\Models\ServerOffer;
+use App\Models\Subscription;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Models\VirtualMachine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
@@ -26,7 +29,39 @@ class AdminDashboardController extends Controller
                 'subscription.serverOffer:id,name',
                 'messages.user',
             ])->latest()->get(),
+            'subscriptions' => Subscription::with([
+                'user:id,first_name,last_name,email',
+                'serverOffer:id,name',
+            ])->latest()->get(),
+            'virtualMachines' => VirtualMachine::with([
+                'operatingSystem:id,name,version',
+                'subscription.user:id,first_name,last_name,email',
+                'subscription.serverOffer:id,name',
+            ])->latest()->get(),
+            'operatingSystems' => OperatingSystem::orderBy('name')->orderBy('version')->get([
+                'id',
+                'name',
+                'version',
+            ]),
         ]);
+    }
+
+    public function update_subscription_status(Request $request, Subscription $subscription)
+    {
+        $subscription->update($request->validate([
+            'status' => 'required|in:active,cancelled,expired',
+        ]));
+
+        return back()->with('success', 'Subscription status updated.');
+    }
+
+    public function update_virtual_machine_status(Request $request, VirtualMachine $virtualMachine)
+    {
+        $virtualMachine->update($request->validate([
+            'status' => 'required|in:running,stopped,provisioning',
+        ]));
+
+        return back()->with('success', 'Virtual machine status updated.');
     }
 
     public function promote_user(User $user)

@@ -1,2 +1,1 @@
-[Mon Sep 21 00:23:28 2026] 127.0.0.1:64963 [GET] URI: /dashboard
-[Mon Sep 21 00:23:30 2026] 127.0.0.1:25702 [GET] URI: /.well-known/appspecific/com.chrome.devtools.json
+{"tool":"pest","result":"passed","tests":1,"passed":1,"assertions":4,"duration_ms":798}
