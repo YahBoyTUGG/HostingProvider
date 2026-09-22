@@ -46,6 +46,11 @@ Route::post('/contact', [ContactController::class, 'store'])->name('contact.stor
 Route::middleware(['auth'])->group(function () {
     // User Dashboard
     Route::get('/dashboard', [UserDashboardController::class, 'index'])->name('dashboard');
+    Route::post('/dockerfiles', [UserDashboardController::class, 'storeDockerfile'])->name('dockerfiles.store');
+    Route::get('/dockerfiles/{dockerfile}/download', [UserDashboardController::class, 'downloadDockerfile'])->name('dockerfiles.download');
+    Route::delete('/dockerfiles/{dockerfile}', [UserDashboardController::class, 'destroyDockerfile'])->name('dockerfiles.destroy');
+    Route::post('/docker-containers/{userContainer}/pause', [UserDashboardController::class, 'pauseDockerContainer'])->name('docker-containers.pause');
+    Route::post('/docker-containers/{userContainer}/unpause', [UserDashboardController::class, 'unpauseDockerContainer'])->name('docker-containers.unpause');
     Route::post('/subscriptions/{subscription}/toggle-power', [UserDashboardController::class, 'toggle_power'])->name('subscriptions.toggle-power');
     Route::post('/subscriptions/{subscription}/cancel', [UserDashboardController::class, 'cancel'])->name('subscriptions.cancel');
 
@@ -77,6 +82,9 @@ Route::middleware(['auth', 'can:admin'])->prefix('admin')->name('admin.')->group
     Route::post('/featured-offers', [AdminDashboardController::class, 'store_feature'])->name('featured-offers.store');
     Route::put('/featured-offers/{feature}', [AdminDashboardController::class, 'update_feature'])->name('featured-offers.update');
     Route::delete('/featured-offers/{feature}', [AdminDashboardController::class, 'destroy_feature'])->name('featured-offers.destroy');
+    Route::post('/docker-containers/{userContainer}/pause', [AdminDashboardController::class, 'pauseDockerContainer'])->name('docker-containers.pause');
+    Route::post('/docker-containers/{userContainer}/unpause', [AdminDashboardController::class, 'unpauseDockerContainer'])->name('docker-containers.unpause');
+    Route::delete('/dockerfiles/{dockerfile}', [AdminDashboardController::class, 'destroyDockerfile'])->name('dockerfiles.destroy');
     Route::post('/contacts/{contact}/read', [AdminDashboardController::class, 'mark_contact_read'])->name('contacts.read');
     Route::post('/tickets/{ticket}/reply', [AdminDashboardController::class, 'reply_to_ticket'])->name('tickets.reply');
     Route::post('/tickets/{ticket}/close', [AdminDashboardController::class, 'close_ticket'])->name('tickets.close');

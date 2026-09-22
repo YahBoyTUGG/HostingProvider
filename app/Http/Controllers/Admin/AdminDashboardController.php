@@ -4,21 +4,39 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
+use App\Models\Dockerfile;
 use App\Models\Features;
 use App\Models\OperatingSystem;
 use App\Models\ServerOffer;
 use App\Models\Subscription;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Models\UserContainer;
 use App\Models\VirtualMachine;
+use App\Services\DockerContainerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 
 class AdminDashboardController extends Controller
 {
-    public function index()
+    public function index(DockerContainerService $dockerService)
     {
+        $dockerfiles = Dockerfile::with([
+            'user:id,first_name,last_name,email',
+            'userContainers',
+        ])->latest()->get();
+
+        foreach ($dockerfiles as $dockerfile) {
+            try {
+                $dockerService->syncStatuses($dockerfile);
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
+        }
+
+        $dockerfiles->load('userContainers');
+
         return Inertia::render('Admin/Dashboard', [
             'users' => User::latest()->get(),
             'offers' => ServerOffer::latest()->get(),
@@ -43,7 +61,41 @@ class AdminDashboardController extends Controller
                 'name',
                 'version',
             ]),
+            'dockerfiles' => $dockerfiles,
         ]);
+    }
+
+    public function pauseDockerContainer(UserContainer $userContainer, DockerContainerService $service)
+    {
+        try {
+            $service->pause($userContainer);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return back()->withErrors(['docker' => $exception->getMessage()]);
+        }
+
+        return back()->with('success', 'Docker container paused.');
+    }
+
+    public function unpauseDockerContainer(UserContainer $userContainer, DockerContainerService $service)
+    {
+        try {
+            $service->unpause($userContainer);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return back()->withErrors(['docker' => $exception->getMessage()]);
+        }
+
+        return back()->with('success', 'Docker container resumed.');
+    }
+
+    public function destroyDockerfile(Dockerfile $dockerfile, DockerContainerService $service)
+    {
+        $service->remove($dockerfile->load('userContainers'));
+
+        return back()->with('success', 'Docker image, container, and source archive removed.');
     }
 
     public function update_subscription_status(Request $request, Subscription $subscription)

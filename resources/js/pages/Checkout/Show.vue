@@ -10,6 +10,9 @@ interface Offer {
     type: 'vps' | 'dedicated';
     ram_gb: number;
     cpu_cores: number;
+    storage_amount_gb: number;
+    storage_type: string;
+    bandwidth_tb: number;
     price_monthly: number | string;
     price_6_months: number | string | null;
     price_1_year: number | string;
@@ -148,7 +151,26 @@ const confirmSubmit = () => {
                 <aside class="h-fit rounded-xl border border-indigo-400/30 bg-slate-900 p-6 lg:sticky lg:top-24">
                     <p class="text-sm font-semibold uppercase tracking-wider text-indigo-300">Order summary</p>
                     <h2 class="mt-3 text-xl font-semibold text-white">{{ offer.name }}</h2>
-                    <p class="mt-1 text-sm text-slate-400">{{ offer.type }} · {{ offer.cpu_cores }} cores · {{ offer.ram_gb }} GB RAM</p>
+                    <p class="mt-1 text-sm capitalize text-slate-400">{{ offer.type }} plan</p>
+                    <div class="mt-5 grid grid-cols-2 gap-3">
+                        <div class="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
+                            <span class="block text-xs text-slate-500">CPU cores</span>
+                            <span class="mt-1 block font-semibold text-slate-200">{{ offer.cpu_cores }}</span>
+                        </div>
+                        <div class="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
+                            <span class="block text-xs text-slate-500">RAM</span>
+                            <span class="mt-1 block font-semibold text-slate-200">{{ offer.ram_gb }} GB</span>
+                        </div>
+                        <div class="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
+                            <span class="block text-xs text-slate-500">Storage capacity</span>
+                            <span class="mt-1 block font-semibold text-slate-200">{{ offer.storage_amount_gb }} GB</span>
+                            <span class="block text-xs text-slate-500">{{ offer.storage_type }}</span>
+                        </div>
+                        <div class="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
+                            <span class="block text-xs text-slate-500">Bandwidth</span>
+                            <span class="mt-1 block font-semibold text-slate-200">{{ offer.bandwidth_tb }} TB</span>
+                        </div>
+                    </div>
                     <dl class="mt-6 space-y-3 border-y border-slate-800 py-5 text-sm">
                         <div class="flex justify-between gap-4"><dt class="text-slate-400">Term</dt><dd class="font-medium text-slate-200">{{ selectedBilling?.label }}</dd></div>
                         <div class="flex justify-between gap-4"><dt class="text-slate-400">Starts</dt><dd class="font-medium text-slate-200">{{ dateFormatter.format(startDate) }}</dd></div>
@@ -181,6 +203,7 @@ const confirmSubmit = () => {
 
                     <dl class="mt-6 space-y-4 rounded-xl border border-slate-800 bg-slate-950/60 p-4 text-sm">
                         <div class="flex justify-between gap-6"><dt class="text-slate-400">Server offer</dt><dd class="text-right font-semibold text-white">{{ offer.name }}</dd></div>
+                        <div class="flex justify-between gap-6"><dt class="text-slate-400">Plan specifications</dt><dd class="text-right font-semibold text-white">{{ offer.cpu_cores }} cores · {{ offer.ram_gb }} GB RAM · {{ offer.storage_amount_gb }} GB {{ offer.storage_type }} · {{ offer.bandwidth_tb }} TB bandwidth</dd></div>
                         <div class="flex justify-between gap-6"><dt class="text-slate-400">Billing term</dt><dd class="text-right font-semibold text-white">{{ selectedBilling?.label }}</dd></div>
                         <div class="flex justify-between gap-6"><dt class="text-slate-400">Machine name</dt><dd class="max-w-[60%] break-words text-right font-semibold text-white">{{ form.machine_name }}</dd></div>
                         <div class="flex justify-between gap-6"><dt class="text-slate-400">Operating system</dt><dd class="text-right font-semibold text-white">{{ selectedOperatingSystem ? `${selectedOperatingSystem.name} ${selectedOperatingSystem.version}` : 'Not selected' }}</dd></div>

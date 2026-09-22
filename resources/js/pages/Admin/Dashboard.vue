@@ -9,6 +9,7 @@ type Tab =
     | 'featured'
     | 'subscriptions'
     | 'virtual-machines'
+    | 'docker'
     | 'contacts'
     | 'tickets';
 type ViewMode = 'list' | 'create';
@@ -110,6 +111,28 @@ interface VirtualMachine {
     } | null;
 }
 
+interface DockerContainer {
+    id: number;
+    container_id: string | null;
+    status: 'running' | 'stopped' | 'provisioning' | 'error' | 'paused';
+    is_paused: boolean;
+    memory_limit_mb: number;
+    cpu_limit_cores: number;
+    container_port: number;
+    host_port: number;
+}
+
+interface Dockerfile {
+    id: number;
+    name: string;
+    file_path: string;
+    image_tag: string;
+    build_status: 'pending' | 'building' | 'ready' | 'failed';
+    build_log: string | null;
+    user?: User | null;
+    user_containers: DockerContainer[];
+}
+
 const props = defineProps<{
     users: User[];
     offers: Offer[];
@@ -119,6 +142,7 @@ const props = defineProps<{
     subscriptions: Subscription[];
     virtualMachines: VirtualMachine[];
     operatingSystems: OperatingSystem[];
+    dockerfiles: Dockerfile[];
 }>();
 
 const activeTab = ref<Tab>('users');
@@ -129,6 +153,7 @@ const search = reactive<Record<Tab, string>>({
     featured: '',
     subscriptions: '',
     'virtual-machines': '',
+    docker: '',
     contacts: '',
     tickets: '',
 });
@@ -150,6 +175,9 @@ const virtualMachineStatusFilter = ref<
 >('all');
 const virtualMachineOperatingSystemFilter = ref<number | 'all'>('all');
 const virtualMachineUserFilter = ref('all');
+const dockerNameFilter = ref('');
+const dockerUserFilter = ref('');
+const processingDockerContainerId = ref<number | null>(null);
 
 const toDateValue = new Date();
 const fromDateValue = new Date(toDateValue);
@@ -314,6 +342,20 @@ const virtualMachineUsers = computed(() =>
                 .filter((email): email is string => Boolean(email)),
         ),
     ].sort(),
+);
+const filteredDockerfiles = computed(() =>
+    props.dockerfiles.filter((dockerfile) => {
+        const nameQuery = dockerNameFilter.value.toLowerCase();
+        const userQuery = dockerUserFilter.value.toLowerCase();
+        const userEmail = dockerfile.user?.email ?? '';
+
+        return (
+            `${dockerfile.name} ${dockerfile.image_tag}`
+                .toLowerCase()
+                .includes(nameQuery) &&
+            userEmail.toLowerCase().includes(userQuery)
+        );
+    }),
 );
 
 const ticketServices = computed(() =>
@@ -528,6 +570,36 @@ const setVirtualMachineStatus = (
     router.put(`/admin/virtual-machines/${virtualMachine.id}/status`, { status });
 };
 
+const toggleDockerContainerPause = (container: DockerContainer) => {
+    processingDockerContainerId.value = container.id;
+    const shouldPause = !container.is_paused;
+
+    router.post(
+        `/admin/docker-containers/${container.id}/${shouldPause ? 'pause' : 'unpause'}`,
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                container.is_paused = shouldPause;
+                container.status = shouldPause ? 'paused' : 'running';
+            },
+            onFinish: () => {
+                processingDockerContainerId.value = null;
+            },
+        },
+    );
+};
+
+const removeDockerfile = (dockerfile: Dockerfile) => {
+    if (!window.confirm(`Remove ${dockerfile.name}, its container, image, and source code?`)) {
+        return;
+    }
+
+    router.delete(`/admin/dockerfiles/${dockerfile.id}`, {
+        preserveScroll: true,
+    });
+};
+
 
 </script>
 
@@ -556,6 +628,7 @@ const setVirtualMachineStatus = (
                         'featured',
                         'subscriptions',
                         'virtual-machines',
+                        'docker',
                         'contacts',
                         'tickets',
                     ] as Tab[]"
@@ -1600,6 +1673,100 @@ const setVirtualMachineStatus = (
         No virtual machines match the current filter.
     </p>
 </section>
+
+            <section v-else-if="activeTab === 'docker'" class="space-y-4">
+                <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <input
+                        v-model="dockerNameFilter"
+                        placeholder="Filter by image or container name..."
+                        class="admin-input"
+                    />
+                    <input
+                        v-model="dockerUserFilter"
+                        placeholder="Filter by uploader email..."
+                        class="admin-input"
+                    />
+                </div>
+                <p class="text-xs text-slate-500">
+                    {{ filteredDockerfiles.length }} Docker deployments found
+                </p>
+
+                <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                    <article
+                        v-for="dockerfile in filteredDockerfiles"
+                        :key="dockerfile.id"
+                        class="rounded-xl border border-slate-800 bg-slate-900 p-5"
+                    >
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div class="min-w-0">
+                                <p class="font-semibold text-white">{{ dockerfile.name }}</p>
+                                <p class="mt-1 break-all font-mono text-xs text-slate-400">
+                                    {{ dockerfile.image_tag }}
+                                </p>
+                                <p class="mt-2 text-xs text-slate-500">
+                                    Uploaded by {{ dockerfile.user?.email ?? 'Unknown user' }}
+                                </p>
+                            </div>
+                            <span
+                                class="rounded-full px-2.5 py-1 text-xs font-semibold capitalize"
+                                :class="dockerfile.user_containers[0]?.is_paused
+                                    ? 'bg-amber-500/10 text-amber-300'
+                                    : dockerfile.user_containers[0]?.status === 'running'
+                                        ? 'bg-emerald-500/10 text-emerald-300'
+                                        : dockerfile.build_status === 'failed'
+                                            ? 'bg-rose-500/10 text-rose-300'
+                                            : 'bg-slate-700 text-slate-300'"
+                            >
+                                {{ dockerfile.user_containers[0]?.status ?? dockerfile.build_status }}
+                            </span>
+                        </div>
+
+                        <div class="mt-4 grid grid-cols-2 gap-3 text-xs">
+                            <div class="rounded-lg border border-slate-800 bg-slate-950 p-3">
+                                <span class="block text-slate-500">Container</span>
+                                <span class="mt-1 block break-all font-mono text-slate-300">
+                                    {{ dockerfile.user_containers[0]?.container_id ?? 'Not created' }}
+                                </span>
+                            </div>
+                            <div class="rounded-lg border border-slate-800 bg-slate-950 p-3">
+                                <span class="block text-slate-500">Port mapping</span>
+                                <span class="mt-1 block text-slate-300">
+                                    {{ dockerfile.user_containers[0]?.container_port ?? '-' }} → :{{ dockerfile.user_containers[0]?.host_port ?? '-' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 flex flex-wrap items-center gap-2">
+                            <button
+                                v-if="dockerfile.user_containers[0] && (dockerfile.user_containers[0].status === 'running' || dockerfile.user_containers[0].is_paused)"
+                                type="button"
+                                :disabled="processingDockerContainerId === dockerfile.user_containers[0].id"
+                                class="admin-secondary"
+                                @click="toggleDockerContainerPause(dockerfile.user_containers[0])"
+                            >
+                                {{ dockerfile.user_containers[0].is_paused ? 'Resume container' : 'Pause container' }}
+                            </button>
+                            <button
+                                type="button"
+                                class="rounded-lg border border-rose-500/30 px-3 py-2 text-xs font-semibold text-rose-300 transition hover:bg-rose-500/10"
+                                @click="removeDockerfile(dockerfile)"
+                            >
+                                Remove image, container &amp; source
+                            </button>
+                        </div>
+
+                        <details v-if="dockerfile.build_log" class="mt-4 rounded-lg border border-slate-800 bg-slate-950">
+                            <summary class="cursor-pointer px-3 py-2 text-xs font-semibold text-slate-400 hover:text-white">
+                                View build log
+                            </summary>
+                            <pre class="max-h-48 overflow-auto whitespace-pre-wrap break-words border-t border-slate-800 p-3 font-mono text-xs leading-5 text-slate-400">{{ dockerfile.build_log }}</pre>
+                        </details>
+                    </article>
+                </div>
+                <p v-if="!filteredDockerfiles.length" class="text-slate-400">
+                    No Docker deployments match the current filters.
+                </p>
+            </section>
 
             <section v-else-if="activeTab === 'contacts'" class="space-y-3">
                 <div class="flex flex-wrap gap-3">

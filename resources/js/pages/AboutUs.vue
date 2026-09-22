@@ -41,16 +41,17 @@ const teamMembers: TeamMember[] = [
         role: 'Head of Systems Operations',
         bio: 'Focuses on storage array performance optimizations, hypervisor security, and enterprise support response.',
         email: 'aleksandar.noveski@velocityrig.io',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=250',
+        avatar: '/images/staff/aleksandar.jpg',
         github: 'https://github.com/YahBoyTUGG',
     },
     {
         id: 4,
-        name: 'Kiko Noveski',
+        name: 'Hristijan Denkovski',
         role: 'Head of Systems Operations',
         bio: 'Focuses on storage array performance optimizations, hypervisor security, and enterprise support response.',
         email: 'kiko.noveski@velocityrig.io',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=250',
+        avatar: '/images/staff/hristijan.jpg',
+        github: 'https://github.com/hristijandenkovski',
     },
 ];
 </script>

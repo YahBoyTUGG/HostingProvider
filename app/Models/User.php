@@ -7,10 +7,10 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
@@ -45,15 +45,28 @@ class User extends Authenticatable
         ];
     }
 
-    public function is_admin(): bool {
+    public function is_admin(): bool
+    {
         return $this->role === 'admin';
     }
 
-    public function subscriptions(): HasMany {
+    public function subscriptions(): HasMany
+    {
         return $this->hasMany(Subscription::class);
     }
 
-    public function tickets(): HasMany {
+    public function tickets(): HasMany
+    {
         return $this->hasMany(Ticket::class);
+    }
+
+    public function dockerfiles(): HasMany
+    {
+        return $this->hasMany(Dockerfile::class);
+    }
+
+    public function userContainers(): HasMany
+    {
+        return $this->hasMany(UserContainer::class);
     }
 }
