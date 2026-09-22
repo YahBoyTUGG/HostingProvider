@@ -2,11 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\User;
 use App\Models\ServerOffer;
 use App\Models\Subscription;
+use App\Models\User;
 use App\Models\VirtualMachine;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
 class SubscriptionService
@@ -17,14 +16,14 @@ class SubscriptionService
     public function create_subscription(User $user, ServerOffer $offer, int $osId, string $cycle, string $machineName, array $app_ids = []): Subscription
     {
         return DB::transaction(function () use ($user, $offer, $osId, $cycle, $machineName, $app_ids) {
-            $durationMonths = match($cycle) {
+            $durationMonths = match ($cycle) {
                 'monthly' => 1,
                 '6_months' => 6,
                 '1_year' => 12,
                 '2_years' => 24,
             };
 
-            $cost = match($cycle) {
+            $cost = match ($cycle) {
                 'monthly' => $offer->price_monthly,
                 '6_months' => $offer->price_6_months ?? ($offer->price_monthly * 6),
                 '1_year' => $offer->price_1_year,
@@ -47,15 +46,15 @@ class SubscriptionService
                 'subscription_id' => $subscription->id,
                 'operating_system_id' => $osId,
                 'name' => $machineName,
-                'ip_address' => rand(11, 199) . '.' . rand(0, 255) . '.' . rand(0, 255) . '.' . rand(1, 254),
-                'ssh_port' => 22,
+                'ip_address' => config('services.starter_vps.ip', '192.168.122.135'),
+                'ssh_port' => (int) config('services.starter_vps.port', 22),
                 'ssh_user' => 'root',
-                'ssh_password_hash' => bcrypt(Str::random(12)),
+                'ssh_password_hash' => bcrypt(config('services.starter_vps.password', '1234')),
                 'status' => 'running',
             ]);
 
             // 3. Attach optional preinstalled software
-            if (!empty($app_ids)) {
+            if (! empty($app_ids)) {
                 $vm->preinstalledApps()->sync($app_ids);
             }
 

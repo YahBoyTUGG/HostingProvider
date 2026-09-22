@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\VirtualMachineTerminalController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ContactController;
@@ -71,6 +72,8 @@ Route::middleware(['auth', 'can:admin'])->prefix('admin')->name('admin.')->group
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::put('/subscriptions/{subscription}/status', [AdminDashboardController::class, 'update_subscription_status'])->name('subscriptions.status');
     Route::put('/virtual-machines/{virtualMachine}/status', [AdminDashboardController::class, 'update_virtual_machine_status'])->name('virtual-machines.status');
+    Route::get('/virtual-machines/{virtualMachine}/terminal', [VirtualMachineTerminalController::class, 'show'])->name('virtual-machines.terminal');
+    Route::post('/virtual-machines/{virtualMachine}/terminal', [VirtualMachineTerminalController::class, 'execute'])->name('virtual-machines.terminal.execute');
     Route::post('/users/{user}/promote', [AdminDashboardController::class, 'promote_user'])->name('users.promote');
     Route::post('/users/{user}/demote', [AdminDashboardController::class, 'demote_user'])->name('users.demote');
     Route::post('/users', [AdminDashboardController::class, 'store_user'])->name('users.store');

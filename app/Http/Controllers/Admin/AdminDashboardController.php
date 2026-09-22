@@ -44,7 +44,7 @@ class AdminDashboardController extends Controller
             'contacts' => Contact::latest()->get(),
             'tickets' => Ticket::with([
                 'user',
-                'subscription.serverOffer:id,name',
+                'subscription.serverOffer:id,name,type',
                 'messages.user',
             ])->latest()->get(),
             'subscriptions' => Subscription::with([
@@ -54,7 +54,7 @@ class AdminDashboardController extends Controller
             'virtualMachines' => VirtualMachine::with([
                 'operatingSystem:id,name,version',
                 'subscription.user:id,first_name,last_name,email',
-                'subscription.serverOffer:id,name',
+                'subscription.serverOffer:id,name,type',
             ])->latest()->get(),
             'operatingSystems' => OperatingSystem::orderBy('name')->orderBy('version')->get([
                 'id',

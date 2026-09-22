@@ -107,7 +107,7 @@ interface VirtualMachine {
     operating_system?: OperatingSystem | null;
     subscription?: {
         user?: User | null;
-        server_offer?: { name: string } | null;
+        server_offer?: { name: string; type?: string } | null;
     } | null;
 }
 
@@ -1627,6 +1627,25 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
                         {{ virtualMachine.subscription?.user?.email ?? 'Unknown user' }} ·
                         {{ virtualMachine.subscription?.server_offer?.name ?? 'Unknown offer' }}
                     </p>
+                    <div
+                        v-if="virtualMachine.subscription?.server_offer?.name === 'Starter VPS'"
+                        class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs"
+                    >
+                        <span class="text-slate-400">
+                            Login: <strong class="font-mono text-slate-200">root</strong>
+                        </span>
+                        <span class="text-slate-400">
+                            Password: <strong class="font-mono text-slate-200">1234</strong>
+                        </span>
+                        <a
+                            :href="`/admin/virtual-machines/${virtualMachine.id}/terminal`"
+                            target="_blank"
+                            rel="noopener"
+                            class="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 font-semibold text-emerald-300 transition hover:bg-emerald-500/20"
+                        >
+                            Open browser terminal
+                        </a>
+                    </div>
                 </div>
                 <div class="inline-flex rounded-lg border border-slate-800 bg-slate-950 p-1">
                     <button

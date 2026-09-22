@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ServerOffer;
-use App\Models\OperatingSystem;
 use App\Models\AvailableApp;
+use App\Models\OperatingSystem;
+use App\Models\ServerOffer;
 use App\Services\SubscriptionService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -14,6 +14,8 @@ class CheckoutController extends Controller
 {
     public function show(ServerOffer $offer)
     {
+        $this->ensureStarterVps($offer);
+
         return Inertia::render('Checkout/Show', [
             'offer' => $offer,
             'operatingSystems' => OperatingSystem::where('is_active', true)
@@ -25,6 +27,8 @@ class CheckoutController extends Controller
 
     public function store(Request $request, ServerOffer $offer, SubscriptionService $service)
     {
+        $this->ensureStarterVps($offer);
+
         // Sanitize card input formatting before validation
         $request->merge([
             'card_number' => preg_replace('/\D/', '', $request->input('card_number', '')),
@@ -65,5 +69,10 @@ class CheckoutController extends Controller
         );
 
         return redirect()->route('dashboard')->with('success', 'Server provisioned successfully!');
+    }
+
+    private function ensureStarterVps(ServerOffer $offer): void
+    {
+        abort_unless($offer->name === 'Starter VPS' && $offer->type === 'vps', 404);
     }
 }

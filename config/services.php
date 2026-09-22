@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'starter_vps' => [
+        'ip' => env('STARTER_VPS_IP', '192.168.122.135'),
+        'port' => (int) env('STARTER_VPS_SSH_PORT', 22),
+        'password' => env('STARTER_VPS_PASSWORD', '1234'),
+    ],
+
 ];

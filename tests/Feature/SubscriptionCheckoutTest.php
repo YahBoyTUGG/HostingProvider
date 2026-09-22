@@ -18,7 +18,7 @@ class SubscriptionCheckoutTest extends TestCase
         // 1. Arrange: Create initial database records
         $user = User::factory()->create();
         $offer = ServerOffer::create([
-            'name' => 'Test Cloud VPS',
+            'name' => 'Starter VPS',
             'type' => 'vps',
             'ram_gb' => 4,
             'cpu_cores' => 2,
