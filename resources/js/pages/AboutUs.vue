@@ -29,7 +29,7 @@ const teamMembers: TeamMember[] = [
     {
         id: 2,
         name: 'David Damevski',
-        role: 'Sales & Marketing Specialist',
+        role: 'Chief Network Engineer',
         bio: 'Oversees edge location deployment, anti-DDoS mitigation strategies, and low-latency network interconnects.',
         email: 'david.damevski@velocityrig.io',
         avatar: 'images/staff/david.jpg',
@@ -47,9 +47,9 @@ const teamMembers: TeamMember[] = [
     {
         id: 4,
         name: 'Hristijan Denkovski',
-        role: 'Data Center Technician',
+        role: 'Head of Systems Operations',
         bio: 'Focuses on storage array performance optimizations, hypervisor security, and enterprise support response.',
-        email: 'hristijan.denkovski@velocityrig.io',
+        email: 'kiko.noveski@velocityrig.io',
         avatar: '/images/staff/hristijan.jpg',
         github: 'https://github.com/hristijandenkovski',
     },
