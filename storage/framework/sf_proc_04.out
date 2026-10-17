@@ -1,1 +1,19 @@
-{"tool":"pest","result":"passed","tests":2,"passed":2,"assertions":3,"duration_ms":570}
+
+7-Zip 24.09 (x64) : Copyright (c) 1999-2024 Igor Pavlov : 2024-11-29
+
+Scanning the drive for archives:
+1 file, 73634 bytes (72 KiB)
+
+Extracting archive: C:\Users\popot\Desktop\Delovna_Praksa\backend\hosting-app\vendor\composer\tmp-99897d71bdf462293627e2b5123f9263.zip
+--
+Path = C:\Users\popot\Desktop\Delovna_Praksa\backend\hosting-app\vendor\composer\tmp-99897d71bdf462293627e2b5123f9263.zip
+Type = zip
+Physical Size = 73634
+Comment = d250c158c75bb10d33e6ebc9b67d65872593ae1a
+
+Everything is Ok
+
+Folders: 5
+Files: 29
+Size:       249495
+Compressed: 73634

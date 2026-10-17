@@ -1,20 +1,3 @@
-[Sat Oct 17 20:20:25 2026] 127.0.0.1:31602 [GET] URI: /
-[Sat Oct 17 20:20:38 2026] 127.0.0.1:43009 [GET] URI: /settings/profile
-[Sat Oct 17 20:20:56 2026] 127.0.0.1:64083 [PATCH] URI: /settings/profile
-[Sat Oct 17 20:20:56 2026] 127.0.0.1:55951 [GET] URI: /settings/profile
-[Sat Oct 17 20:21:11 2026] 127.0.0.1:1031 [PUT] URI: /settings/password
-[Sat Oct 17 20:21:11 2026] 127.0.0.1:15168 [GET] URI: /settings/profile
-[Sat Oct 17 20:21:14 2026] 127.0.0.1:8168 [POST] URI: /logout
-[Sat Oct 17 20:21:14 2026] 127.0.0.1:37048 [GET] URI: /
-[Sat Oct 17 20:21:16 2026] 127.0.0.1:24849 [GET] URI: /login
-[Sat Oct 17 20:21:24 2026] 127.0.0.1:42268 [POST] URI: /login
-[Sat Oct 17 20:21:24 2026] 127.0.0.1:22914 [GET] URI: /dashboard
-[Sat Oct 17 20:21:28 2026] 127.0.0.1:9316 [GET] URI: /catalog
-[Sat Oct 17 20:21:29 2026] 127.0.0.1:48892 [GET] URI: /
-[Sat Oct 17 20:23:29 2026] 127.0.0.1:8166 [GET] URI: /
-[Sat Oct 17 20:23:33 2026] 127.0.0.1:26871 [GET] URI: /.well-known/appspecific/com.chrome.devtools.json
-[Sat Oct 17 20:23:35 2026] 127.0.0.1:59971 [GET] URI: /.well-known/appspecific/com.chrome.devtools.json
-[Sat Oct 17 20:23:36 2026] 127.0.0.1:32573 [GET] URI: /.well-known/appspecific/com.chrome.devtools.json
-[Sat Oct 17 20:23:37 2026] 127.0.0.1:63539 [GET] URI: /.well-known/appspecific/com.chrome.devtools.json
-[Sat Oct 17 20:23:38 2026] 127.0.0.1:10624 [GET] URI: /.well-known/appspecific/com.chrome.devtools.json
-[Sat Oct 17 20:23:39 2026] 127.0.0.1:62658 [GET] URI: /.well-known/appspecific/com.chrome.devtools.json
+
+  [37;44m INFO [39;49m No publishable resources for tag [1m[laravel-assets][22m.  
+

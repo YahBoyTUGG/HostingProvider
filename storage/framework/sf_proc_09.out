@@ -1,0 +1,19 @@
+
+7-Zip 24.09 (x64) : Copyright (c) 1999-2024 Igor Pavlov : 2024-11-29
+
+Scanning the drive for archives:
+1 file, 124460 bytes (122 KiB)
+
+Extracting archive: C:\Users\popot\Desktop\Delovna_Praksa\backend\hosting-app\vendor\composer\tmp-c97f5274304002db4a24a067870b6ad9.zip
+--
+Path = C:\Users\popot\Desktop\Delovna_Praksa\backend\hosting-app\vendor\composer\tmp-c97f5274304002db4a24a067870b6ad9.zip
+Type = zip
+Physical Size = 124460
+Comment = 967a801bd188989a5669bd280f252d51c0fdc9ee
+
+Everything is Ok
+
+Folders: 14
+Files: 104
+Size:       340899
+Compressed: 124460
