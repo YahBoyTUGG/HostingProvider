@@ -2,6 +2,7 @@
 import { Link, usePage } from '@inertiajs/vue3';
 import { ChevronDown, Menu, X } from '@lucide/vue';
 import { computed, ref } from 'vue';
+import ThemeToggle from '@/components/ThemeToggle.vue';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -10,7 +11,6 @@ import {
 import UserMenuContent from '@/components/UserMenuContent.vue';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { getInitials } from '@/composables/useInitials';
-import ThemeToggle from '@/components/ThemeToggle.vue';
 import type { User } from '@/types';
 
 const page = usePage();
@@ -51,7 +51,8 @@ const closeMobileMenu = () => {
                     >
                         VR
                     </span>
-                    <span class="truncate text-base font-semibold tracking-tight sm:text-lg"
+                    <span
+                        class="truncate text-base font-semibold tracking-tight sm:text-lg"
                         >VelocityRig</span
                     >
                 </Link>
@@ -59,104 +60,106 @@ const closeMobileMenu = () => {
                 <nav
                     class="hidden items-center gap-3 text-sm font-medium xl:flex xl:gap-5"
                 >
-                <Link
-                    href="/catalog"
-                    :class="[
-                        'transition-colors hover:text-slate-100',
-                        isCurrentOrParentUrl('/catalog')
-                            ? activeNavClasses
-                            : 'text-slate-400',
-                    ]"
-                >
-                    Catalog
-                </Link>
-                <Link
-                    v-if="user"
-                    href="/tickets"
-                    :class="[
-                        'transition-colors hover:text-slate-100',
-                        isCurrentOrParentUrl('/tickets')
-                            ? activeNavClasses
-                            : 'text-slate-400',
-                    ]"
-                >
-                    Support Tickets
-                </Link>
-
-                <Link
-                    v-if="user"
-                    href="/dashboard"
-                    :class="[
-                        'transition-colors hover:text-slate-100',
-                        isCurrentOrParentUrl('/dashboard')
-                            ? activeNavClasses
-                            : 'text-slate-400',
-                    ]"
-                >
-                    Dashboard
-                </Link>
-
-                <Link
-                    v-if="user?.role === 'admin'"
-                    href="/admin/dashboard"
-                    :class="[
-                        'transition-colors hover:text-slate-100',
-                        isCurrentOrParentUrl('/admin/dashboard')
-                            ? activeNavClasses
-                            : 'text-slate-400',
-                    ]"
-                >
-                    Admin Dashboard
-                </Link>
-
-                <span
-                    v-if="user"
-                    class="h-6 border-l border-slate-700"
-                    aria-hidden="true"
-                ></span>
-
-                <DropdownMenu v-if="user">
-                    <DropdownMenuTrigger as-child>
-                        <button
-                            type="button"
-                            class="flex items-center gap-3 rounded-lg p-1.5 transition-colors hover:bg-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                        >
-                            <span
-                                class="flex h-8 w-8 items-center justify-center rounded-lg border border-indigo-500/30 bg-indigo-500/20 text-xs font-semibold text-indigo-300 uppercase"
-                            >
-                                {{ getInitials(displayName) }}
-                            </span>
-                            <span class="hidden text-left sm:block">
-                                <span class="block leading-none text-slate-200">
-                                    {{ displayName }}
-                                </span>
-                                <span
-                                    class="mt-1 block max-w-32 truncate text-xs leading-none text-slate-400"
-                                >
-                                    {{ user.email }}
-                                </span>
-                            </span>
-                            <ChevronDown
-                                class="h-4 w-4 text-slate-400"
-                                aria-hidden="true"
-                            />
-                        </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                        align="end"
-                        class="w-60 border-slate-700 bg-[#0b0f19] p-1 text-slate-100 shadow-2xl shadow-black/40"
+                    <Link
+                        href="/catalog"
+                        :class="[
+                            'transition-colors hover:text-slate-100',
+                            isCurrentOrParentUrl('/catalog')
+                                ? activeNavClasses
+                                : 'text-slate-400',
+                        ]"
                     >
-                        <UserMenuContent :user="user" />
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                <Link
-                    v-else
-                    href="/login"
-                    class="text-slate-300 transition-colors hover:text-white"
-                >
-                    Sign In
-                </Link>
-                <ThemeToggle />
+                        Catalog
+                    </Link>
+                    <Link
+                        v-if="user"
+                        href="/tickets"
+                        :class="[
+                            'transition-colors hover:text-slate-100',
+                            isCurrentOrParentUrl('/tickets')
+                                ? activeNavClasses
+                                : 'text-slate-400',
+                        ]"
+                    >
+                        Support Tickets
+                    </Link>
+
+                    <Link
+                        v-if="user"
+                        href="/dashboard"
+                        :class="[
+                            'transition-colors hover:text-slate-100',
+                            isCurrentOrParentUrl('/dashboard')
+                                ? activeNavClasses
+                                : 'text-slate-400',
+                        ]"
+                    >
+                        Dashboard
+                    </Link>
+
+                    <Link
+                        v-if="user?.role === 'admin'"
+                        href="/admin/dashboard"
+                        :class="[
+                            'transition-colors hover:text-slate-100',
+                            isCurrentOrParentUrl('/admin/dashboard')
+                                ? activeNavClasses
+                                : 'text-slate-400',
+                        ]"
+                    >
+                        Admin Dashboard
+                    </Link>
+
+                    <span
+                        v-if="user"
+                        class="h-6 border-l border-slate-700"
+                        aria-hidden="true"
+                    ></span>
+
+                    <DropdownMenu v-if="user">
+                        <DropdownMenuTrigger as-child>
+                            <button
+                                type="button"
+                                class="flex items-center gap-3 rounded-lg p-1.5 transition-colors hover:bg-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                            >
+                                <span
+                                    class="flex h-8 w-8 items-center justify-center rounded-lg border border-indigo-500/30 bg-indigo-500/20 text-xs font-semibold text-indigo-300 uppercase"
+                                >
+                                    {{ getInitials(displayName) }}
+                                </span>
+                                <span class="hidden text-left sm:block">
+                                    <span
+                                        class="block leading-none text-slate-200"
+                                    >
+                                        {{ displayName }}
+                                    </span>
+                                    <span
+                                        class="mt-1 block max-w-32 truncate text-xs leading-none text-slate-400"
+                                    >
+                                        {{ user.email }}
+                                    </span>
+                                </span>
+                                <ChevronDown
+                                    class="h-4 w-4 text-slate-400"
+                                    aria-hidden="true"
+                                />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                            align="end"
+                            class="w-60 border-slate-700 bg-[#0b0f19] p-1 text-slate-100 shadow-2xl shadow-black/40"
+                        >
+                            <UserMenuContent :user="user" />
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Link
+                        v-else
+                        href="/login"
+                        class="text-slate-300 transition-colors hover:text-white"
+                    >
+                        Sign In
+                    </Link>
+                    <ThemeToggle />
                 </nav>
 
                 <button
@@ -164,10 +167,18 @@ const closeMobileMenu = () => {
                     class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 text-slate-200 transition hover:border-indigo-400 hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none xl:hidden"
                     :aria-expanded="mobileMenuOpen"
                     aria-controls="site-mobile-menu"
-                    :aria-label="mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'"
+                    :aria-label="
+                        mobileMenuOpen
+                            ? 'Close navigation menu'
+                            : 'Open navigation menu'
+                    "
                     @click="mobileMenuOpen = !mobileMenuOpen"
                 >
-                    <X v-if="mobileMenuOpen" class="h-5 w-5" aria-hidden="true" />
+                    <X
+                        v-if="mobileMenuOpen"
+                        class="h-5 w-5"
+                        aria-hidden="true"
+                    />
                     <Menu v-else class="h-5 w-5" aria-hidden="true" />
                 </button>
             </div>
@@ -255,14 +266,21 @@ const closeMobileMenu = () => {
                                             {{ getInitials(displayName) }}
                                         </span>
                                         <span class="min-w-0">
-                                            <span class="block truncate text-slate-200">
+                                            <span
+                                                class="block truncate text-slate-200"
+                                            >
                                                 {{ displayName }}
                                             </span>
-                                            <span class="block max-w-48 truncate text-xs text-slate-400">
+                                            <span
+                                                class="block max-w-48 truncate text-xs text-slate-400"
+                                            >
                                                 {{ user.email }}
                                             </span>
                                         </span>
-                                        <ChevronDown class="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+                                        <ChevronDown
+                                            class="h-4 w-4 shrink-0 text-slate-400"
+                                            aria-hidden="true"
+                                        />
                                     </button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent

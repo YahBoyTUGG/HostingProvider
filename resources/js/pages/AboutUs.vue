@@ -2,10 +2,6 @@
 import { Head, Link } from '@inertiajs/vue3';
 import SiteHeader from '@/components/SiteHeader.vue';
 
-defineOptions({
-    layout: null,
-});
-
 interface TeamMember {
     id: number;
     name: string;

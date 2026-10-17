@@ -13,7 +13,11 @@ createServer((page) =>
         page,
         render: renderToString,
         title: (title) => (title ? `${title} - ${appName}` : appName),
-        resolve: (name) => resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue')),
+        resolve: (name) =>
+            resolvePageComponent(
+                `./pages/${name}.vue`,
+                import.meta.glob<DefineComponent>('./pages/**/*.vue'),
+            ),
         setup({ App, props, plugin }) {
             const ziggy = (page.props as any)?.ziggy;
 
@@ -21,8 +25,10 @@ createServer((page) =>
                 .use(plugin)
                 .use(ZiggyVue, {
                     ...(ziggy || {}),
-                    location: ziggy?.location ? new URL(ziggy.location) : undefined,
+                    location: ziggy?.location
+                        ? new URL(ziggy.location)
+                        : undefined,
                 });
         },
-    })
+    }),
 );

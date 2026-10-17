@@ -1,27 +1,18 @@
 <script setup lang="ts">
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import SiteHeader from '@/components/SiteHeader.vue';
 
 const page = usePage();
 const isProfileEditorOpen = ref(false);
-const user = computed(
-    () =>
-        page.props.auth.user as {
-            first_name: string;
-            last_name: string;
-            email: string;
-            phone_number: string;
-            living_address: string;
-        },
-);
+const user = computed(() => page.props.auth.user);
 
 const profileForm = useForm({
-    first_name: user.value.first_name,
-    last_name: user.value.last_name,
+    first_name: user.value.first_name ?? '',
+    last_name: user.value.last_name ?? '',
     email: user.value.email,
-    phone_number: user.value.phone_number,
-    living_address: user.value.living_address,
+    phone_number: user.value.phone_number ?? '',
+    living_address: user.value.living_address ?? '',
 });
 
 const passwordForm = useForm({

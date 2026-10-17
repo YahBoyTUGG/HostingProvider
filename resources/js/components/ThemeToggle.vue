@@ -20,9 +20,7 @@ const { resolvedAppearance, updateAppearance } = useAppearance();
                 : 'Switch to dark theme'
         "
         @click="
-            updateAppearance(
-                resolvedAppearance === 'dark' ? 'light' : 'dark',
-            )
+            updateAppearance(resolvedAppearance === 'dark' ? 'light' : 'dark')
         "
     >
         <Sun

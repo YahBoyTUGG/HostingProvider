@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import SiteHeader from '@/components/SiteHeader.vue';
-
-defineOptions({
-    layout: null,
-});
 
 interface ServerOffer {
     id: number;
@@ -15,6 +11,7 @@ interface ServerOffer {
     cpu_cores: number;
     ram_gb: number;
     storage_gb: number;
+    storage_type: string;
     bandwidth_tb: number;
     has_gpu: boolean;
     gpu_model: string | null;
@@ -49,14 +46,17 @@ const filteredOffers = computed(() => {
             ) {
                 return false;
             }
+
             // VPS / Dedicated
             if (serverType.value !== 'all' && offer.type !== serverType.value) {
                 return false;
             }
+
             // GPU Capability
             if (requireGpu.value && !offer.has_gpu) {
                 return false;
             }
+
             // Hardware Specs
             if (
                 minCores.value !== '' &&
@@ -64,15 +64,18 @@ const filteredOffers = computed(() => {
             ) {
                 return false;
             }
+
             if (minRam.value !== '' && offer.ram_gb < Number(minRam.value)) {
                 return false;
             }
+
             if (
                 minStorage.value !== '' &&
                 offer.storage_gb < Number(minStorage.value)
             ) {
                 return false;
             }
+
             // Billing Durations
             if (
                 selectedDuration.value !== 'all' &&
@@ -80,15 +83,26 @@ const filteredOffers = computed(() => {
             ) {
                 return false;
             }
+
             return true;
         })
         .sort((a, b) => {
-            if (sortBy.value === 'price_asc')
+            if (sortBy.value === 'price_asc') {
                 return a.price_monthly - b.price_monthly;
-            if (sortBy.value === 'price_desc')
+            }
+
+            if (sortBy.value === 'price_desc') {
                 return b.price_monthly - a.price_monthly;
-            if (sortBy.value === 'cores_desc') return b.cpu_cores - a.cpu_cores;
-            if (sortBy.value === 'ram_desc') return b.ram_gb - a.ram_gb;
+            }
+
+            if (sortBy.value === 'cores_desc') {
+                return b.cpu_cores - a.cpu_cores;
+            }
+
+            if (sortBy.value === 'ram_desc') {
+                return b.ram_gb - a.ram_gb;
+            }
+
             return 0;
         });
 });

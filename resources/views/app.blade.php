@@ -30,11 +30,8 @@
             }
         </style>
 
-        <!--
-            <link rel="icon" href="/favicon.ico" sizes="any">
-            <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-        -->
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        <link rel="icon" type="image/jpeg" href="/images/velocityrig-logo.jpg">
+        <link rel="apple-touch-icon" href="/images/velocityrig-logo.jpg">
 
         @fonts
 

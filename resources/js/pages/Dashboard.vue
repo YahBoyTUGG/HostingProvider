@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref, type PropType } from 'vue';
+import { ref } from 'vue';
 import SiteHeader from '@/components/SiteHeader.vue';
 import { Toaster } from '@/components/ui/sonner';
 import { containerAccessUrl } from '@/lib/containerAccessUrl';
@@ -24,27 +24,42 @@ interface Dockerfile {
     user_containers: DockerContainer[];
 }
 
-const props = defineProps({
-    activeSubscriptions: {
-        type: Array,
-        default: () => [],
-    },
-    monthlySpend: {
-        type: Number,
-        default: 0,
-    },
-    subscriptionHistory: {
-        type: Array,
-        default: () => [],
-    },
-    dockerfiles: {
-        type: Array as PropType<Dockerfile[]>,
-        default: () => [],
-    },
-});
+interface ServerOffer {
+    name: string;
+}
 
-const processingPowerId = ref(null);
-const processingCancelId = ref(null);
+interface VirtualMachine {
+    status: 'running' | 'stopped' | 'provisioning' | 'error';
+    name: string;
+    ip_address: string;
+    ssh_user: string;
+    operating_system?: {
+        name: string;
+        version: string;
+        full_name?: string | null;
+    } | null;
+    preinstalled_apps?: { id: number; name: string }[];
+}
+
+interface Subscription {
+    id: number;
+    server_offer?: ServerOffer | null;
+    virtual_machine?: VirtualMachine | null;
+    billing_cycle?: string | null;
+    cost: number;
+    status: string;
+    ends_at: string | null;
+}
+
+defineProps<{
+    activeSubscriptions: Subscription[];
+    monthlySpend: number;
+    subscriptionHistory: Subscription[];
+    dockerfiles: Dockerfile[];
+}>();
+
+const processingPowerId = ref<number | null>(null);
+const processingCancelId = ref<number | null>(null);
 const isDockerModalOpen = ref(false);
 const dockerName = ref('');
 const dockerArchive = ref<File | null>(null);
@@ -75,6 +90,7 @@ const uploadDockerArchive = () => {
 
     if (!dockerName.value || !dockerArchive.value) {
         dockerUploadError.value = 'Enter a name and choose a .zip archive.';
+
         return;
     }
 
@@ -92,11 +108,16 @@ const uploadDockerArchive = () => {
             closeDockerModal();
             dockerName.value = '';
             dockerArchive.value = null;
-            if (dockerArchiveInput.value) dockerArchiveInput.value.value = '';
+
+            if (dockerArchiveInput.value) {
+                dockerArchiveInput.value.value = '';
+            }
         },
         onError: (errors) => {
             dockerUploadError.value =
-                errors.archive ?? errors.name ?? 'The archive could not be deployed.';
+                errors.archive ??
+                errors.name ??
+                'The archive could not be deployed.';
         },
     });
 };
@@ -111,14 +132,18 @@ const openDockerDeleteModal = (dockerfile: Dockerfile) => {
 };
 
 const closeDockerDeleteModal = () => {
-    if (isRemovingDockerfile.value) return;
+    if (isRemovingDockerfile.value) {
+        return;
+    }
 
     selectedDockerfile.value = null;
     isDockerDeleteModalOpen.value = false;
 };
 
 const confirmRemoveDockerfile = () => {
-    if (!selectedDockerfile.value) return;
+    if (!selectedDockerfile.value) {
+        return;
+    }
 
     isRemovingDockerfile.value = true;
     router.delete(`/dockerfiles/${selectedDockerfile.value.id}`, {
@@ -177,14 +202,19 @@ const openCancelModal = (sub: any) => {
 
 // Close modal & reset selection
 const closeCancelModal = () => {
-    if (processingCancelId.value) return; // Prevent closing while request is in flight
+    if (processingCancelId.value) {
+        return;
+    } // Prevent closing while request is in flight
+
     isCancelModalOpen.value = false;
     selectedSubForCancel.value = null;
 };
 
 // Confirm cancellation request
 const confirmCancelSubscription = () => {
-    if (!selectedSubForCancel.value) return;
+    if (!selectedSubForCancel.value) {
+        return;
+    }
 
     const subscriptionId = selectedSubForCancel.value.id;
     processingCancelId.value = subscriptionId;
@@ -228,9 +258,11 @@ const confirmCancelSubscription = () => {
                 <h1 class="mt-2 text-3xl font-bold tracking-tight text-white">
                     Your dashboard
                 </h1>
-                <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
-                    Manage your servers and keep track of
-                    your subscriptions and Docker containers.
+                <p
+                    class="mt-2 max-w-2xl text-sm leading-6 text-slate-400 sm:text-base"
+                >
+                    Manage your servers and keep track of your subscriptions and
+                    Docker containers.
                 </p>
             </header>
 
@@ -373,23 +405,23 @@ const confirmCancelSubscription = () => {
                                     :disabled="
                                         processingPowerId === sub.id ||
                                         sub.virtual_machine?.status ===
-                                        'provisioning'
+                                            'provisioning'
                                     "
                                     :title="
                                         sub.virtual_machine?.status ===
                                         'provisioning'
-                                        ? 'Power controls are unavailable while the server is provisioning.'
-                                        : undefined
+                                            ? 'Power controls are unavailable while the server is provisioning.'
+                                            : undefined
                                     "
                                     class="flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-semibold shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-50"
                                     :class="
                                         sub.virtual_machine?.status ===
                                         'provisioning'
-                                        ? 'border-slate-600 bg-slate-700/50 text-slate-400'
-                                        : sub.virtual_machine?.status ===
-                                            'running'
-                                          ? 'border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20'
-                                          : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
+                                            ? 'border-slate-600 bg-slate-700/50 text-slate-400'
+                                            : sub.virtual_machine?.status ===
+                                                'running'
+                                              ? 'border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20'
+                                              : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
                                     "
                                 >
                                     <span
@@ -505,7 +537,8 @@ const confirmCancelSubscription = () => {
                             Docker Containers
                         </h2>
                         <p class="mt-1 text-sm text-slate-400">
-                            Build and run applications from your own Docker context.
+                            Build and run applications from your own Docker
+                            context.
                         </p>
                     </div>
                     <button
@@ -534,56 +567,127 @@ const confirmCancelSubscription = () => {
                     >
                         <div class="flex items-start justify-between gap-4">
                             <div class="min-w-0">
-                                <h3 class="font-bold text-white">{{ dockerfile.name }}</h3>
-                                <p class="mt-1 font-mono text-xs text-slate-400">
+                                <h3 class="font-bold text-white">
+                                    {{ dockerfile.name }}
+                                </h3>
+                                <p
+                                    class="mt-1 font-mono text-xs text-slate-400"
+                                >
                                     {{ dockerfile.image_tag }}
                                 </p>
                             </div>
                             <div class="flex shrink-0 items-center gap-2">
                                 <span
                                     class="rounded-full px-2.5 py-1 text-xs font-semibold capitalize"
-                                    :class="dockerfile.user_containers?.[0]?.is_paused
-                                        ? 'bg-amber-500/10 text-amber-400'
-                                        : dockerfile.user_containers?.[0]?.status === 'running'
-                                        ? 'bg-emerald-500/10 text-emerald-400'
-                                        : dockerfile.user_containers?.[0]?.status === 'error' || dockerfile.build_status === 'failed'
-                                            ? 'bg-rose-500/10 text-rose-400'
-                                            : 'bg-amber-500/10 text-amber-400'"
+                                    :class="
+                                        dockerfile.user_containers?.[0]
+                                            ?.is_paused
+                                            ? 'bg-amber-500/10 text-amber-400'
+                                            : dockerfile.user_containers?.[0]
+                                                    ?.status === 'running'
+                                              ? 'bg-emerald-500/10 text-emerald-400'
+                                              : dockerfile.user_containers?.[0]
+                                                      ?.status === 'error' ||
+                                                  dockerfile.build_status ===
+                                                      'failed'
+                                                ? 'bg-rose-500/10 text-rose-400'
+                                                : 'bg-amber-500/10 text-amber-400'
+                                    "
                                 >
-                                    {{ dockerfile.user_containers?.[0]?.status ?? 'not started' }}
+                                    {{
+                                        dockerfile.user_containers?.[0]
+                                            ?.status ?? 'not started'
+                                    }}
                                 </span>
                                 <button
-                                    v-if="dockerfile.user_containers?.[0] && (dockerfile.user_containers[0].status === 'running' || dockerfile.user_containers[0].is_paused)"
+                                    v-if="
+                                        dockerfile.user_containers?.[0] &&
+                                        (dockerfile.user_containers[0]
+                                            .status === 'running' ||
+                                            dockerfile.user_containers[0]
+                                                .is_paused)
+                                    "
                                     type="button"
-                                    :disabled="processingDockerContainerId === dockerfile.user_containers[0].id"
-                                    @click="toggleDockerContainerPause(dockerfile.user_containers[0])"
+                                    :disabled="
+                                        processingDockerContainerId ===
+                                        dockerfile.user_containers[0].id
+                                    "
+                                    @click="
+                                        toggleDockerContainerPause(
+                                            dockerfile.user_containers[0],
+                                        )
+                                    "
                                     class="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-300 transition hover:bg-amber-500/20 disabled:opacity-50"
-                                    :aria-label="dockerfile.user_containers[0].is_paused ? 'Resume container' : 'Pause container'"
+                                    :aria-label="
+                                        dockerfile.user_containers[0].is_paused
+                                            ? 'Resume container'
+                                            : 'Pause container'
+                                    "
                                 >
-                                    <span v-if="processingDockerContainerId === dockerfile.user_containers[0].id">...</span>
-                                    <span v-else>{{ dockerfile.user_containers[0].is_paused ? 'Resume' : 'Pause' }}</span>
+                                    <span
+                                        v-if="
+                                            processingDockerContainerId ===
+                                            dockerfile.user_containers[0].id
+                                        "
+                                        >...</span
+                                    >
+                                    <span v-else>{{
+                                        dockerfile.user_containers[0].is_paused
+                                            ? 'Resume'
+                                            : 'Pause'
+                                    }}</span>
                                 </button>
                             </div>
                         </div>
                         <div class="mt-4 grid grid-cols-2 gap-3 text-xs">
-                            <div class="rounded-lg border border-slate-700 bg-slate-900/60 p-3">
-                                <span class="block text-slate-500">Container</span>
-                                <span class="mt-1 block font-medium capitalize text-slate-200">
-                                    {{ dockerfile.user_containers?.[0]?.status ?? 'not started' }}
+                            <div
+                                class="rounded-lg border border-slate-700 bg-slate-900/60 p-3"
+                            >
+                                <span class="block text-slate-500"
+                                    >Container</span
+                                >
+                                <span
+                                    class="mt-1 block font-medium text-slate-200 capitalize"
+                                >
+                                    {{
+                                        dockerfile.user_containers?.[0]
+                                            ?.status ?? 'not started'
+                                    }}
                                 </span>
                             </div>
-                            <div class="rounded-lg border border-slate-700 bg-slate-900/60 p-3">
-                                <span class="block text-slate-500">Resources</span>
-                                <span class="mt-1 block font-medium text-slate-200">
-                                    {{ dockerfile.user_containers?.[0]?.memory_limit_mb ?? '-' }} MB ·
-                                    {{ dockerfile.user_containers?.[0]?.cpu_limit_cores ?? '-' }} CPU
+                            <div
+                                class="rounded-lg border border-slate-700 bg-slate-900/60 p-3"
+                            >
+                                <span class="block text-slate-500"
+                                    >Resources</span
+                                >
+                                <span
+                                    class="mt-1 block font-medium text-slate-200"
+                                >
+                                    {{
+                                        dockerfile.user_containers?.[0]
+                                            ?.memory_limit_mb ?? '-'
+                                    }}
+                                    MB ·
+                                    {{
+                                        dockerfile.user_containers?.[0]
+                                            ?.cpu_limit_cores ?? '-'
+                                    }}
+                                    CPU
                                 </span>
                             </div>
                         </div>
-                        <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+                        <div
+                            class="mt-4 flex flex-wrap items-center justify-between gap-3"
+                        >
                             <div class="flex flex-wrap items-center gap-3">
                                 <a
-                                    :href="route('dockerfiles.download', dockerfile.id)"
+                                    :href="
+                                        route(
+                                            'dockerfiles.download',
+                                            dockerfile.id,
+                                        )
+                                    "
                                     class="text-sm font-semibold text-cyan-400 hover:text-cyan-300"
                                 >
                                     Download source archive
@@ -598,16 +702,33 @@ const confirmCancelSubscription = () => {
                             </div>
                             <div class="flex flex-wrap items-center gap-3">
                                 <a
-                                    v-if="dockerfile.user_containers?.[0]?.status === 'running'"
-                                    :href="containerAccessUrl(dockerfile.user_containers[0].host_port)"
+                                    v-if="
+                                        dockerfile.user_containers?.[0]
+                                            ?.status === 'running'
+                                    "
+                                    :href="
+                                        containerAccessUrl(
+                                            dockerfile.user_containers[0]
+                                                .host_port,
+                                        )
+                                    "
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     class="text-sm font-semibold text-emerald-400 hover:text-emerald-300"
                                 >
                                     View
                                 </a>
-                                <span v-if="dockerfile.user_containers?.[0]" class="text-xs text-slate-500">
-                                    {{ dockerfile.user_containers[0].container_port }} → :{{ dockerfile.user_containers[0].host_port }}
+                                <span
+                                    v-if="dockerfile.user_containers?.[0]"
+                                    class="text-xs text-slate-500"
+                                >
+                                    {{
+                                        dockerfile.user_containers[0]
+                                            .container_port
+                                    }}
+                                    → :{{
+                                        dockerfile.user_containers[0].host_port
+                                    }}
                                 </span>
                             </div>
                         </div>
@@ -621,7 +742,9 @@ const confirmCancelSubscription = () => {
                                 View build log
                             </summary>
                             <div class="border-t border-slate-800 px-4 py-3">
-                                <pre class="max-h-64 overflow-x-auto overflow-y-auto whitespace-pre-wrap break-words font-mono text-left text-xs leading-5 text-slate-400">{{ dockerfile.build_log }}</pre>
+                                <pre
+                                    class="max-h-64 overflow-x-auto overflow-y-auto text-left font-mono text-xs leading-5 break-words whitespace-pre-wrap text-slate-400"
+                                    >{{ dockerfile.build_log }}</pre>
                             </div>
                         </details>
                     </article>
@@ -641,7 +764,7 @@ const confirmCancelSubscription = () => {
                     tabindex="0"
                 >
                     <table
-                        class="min-w-[36rem] w-full text-left text-sm text-slate-300"
+                        class="w-full min-w-[36rem] text-left text-sm text-slate-300"
                     >
                         <thead
                             class="border-b border-slate-700 bg-slate-900/80 text-xs font-semibold text-slate-400 uppercase"
@@ -663,7 +786,8 @@ const confirmCancelSubscription = () => {
                                     colspan="5"
                                     class="px-6 py-10 text-center text-sm text-slate-400"
                                 >
-                                    You have no billing or subscription history yet.
+                                    You have no billing or subscription history
+                                    yet.
                                 </td>
                             </tr>
                         </tbody>
@@ -732,11 +856,18 @@ const confirmCancelSubscription = () => {
                         class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm"
                         @click="closeDockerModal"
                     ></div>
-                    <div class="relative w-full max-w-lg rounded-2xl border border-slate-700/80 bg-slate-900 p-6 shadow-2xl">
+                    <div
+                        class="relative w-full max-w-lg rounded-2xl border border-slate-700/80 bg-slate-900 p-6 shadow-2xl"
+                    >
                         <div class="flex items-start justify-between gap-4">
                             <div>
-                                <h3 class="text-lg font-bold text-white">Deploy Docker application</h3>
-                                <p class="mt-1 text-sm text-slate-400">Upload a complete build context and we will build its image and start a container.</p>
+                                <h3 class="text-lg font-bold text-white">
+                                    Deploy Docker application
+                                </h3>
+                                <p class="mt-1 text-sm text-slate-400">
+                                    Upload a complete build context and we will
+                                    build its image and start a container.
+                                </p>
                             </div>
                             <button
                                 type="button"
@@ -770,40 +901,94 @@ const confirmCancelSubscription = () => {
                                 />
                             </label>
 
-                            <div class="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4 text-sm text-slate-300">
-                                <p class="font-semibold text-cyan-300">Archive organization</p>
-                                <ul class="mt-2 list-disc space-y-1 pl-5 text-xs text-slate-400">
-                                    <li>Put <code class="text-slate-200">Dockerfile</code> at the archive root.</li>
-                                    <li>Keep application source, dependency files, and assets beside it.</li>
-                                    <li>Use relative paths in <code class="text-slate-200">COPY</code> and <code class="text-slate-200">ADD</code>.</li>
-                                    <li>Do not include secrets; use environment variables at runtime.</li>
+                            <div
+                                class="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4 text-sm text-slate-300"
+                            >
+                                <p class="font-semibold text-cyan-300">
+                                    Archive organization
+                                </p>
+                                <ul
+                                    class="mt-2 list-disc space-y-1 pl-5 text-xs text-slate-400"
+                                >
+                                    <li>
+                                        Put
+                                        <code class="text-slate-200"
+                                            >Dockerfile</code
+                                        >
+                                        at the archive root.
+                                    </li>
+                                    <li>
+                                        Keep application source, dependency
+                                        files, and assets beside it.
+                                    </li>
+                                    <li>
+                                        Use relative paths in
+                                        <code class="text-slate-200">COPY</code>
+                                        and
+                                        <code class="text-slate-200">ADD</code>.
+                                    </li>
+                                    <li>
+                                        Do not include secrets; use environment
+                                        variables at runtime.
+                                    </li>
                                 </ul>
                             </div>
 
                             <div class="grid grid-cols-2 gap-3">
                                 <label class="text-sm text-slate-300">
                                     Memory (MB)
-                                    <input v-model.number="dockerMemory" type="number" min="64" max="32768" step="64" class="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400" />
+                                    <input
+                                        v-model.number="dockerMemory"
+                                        type="number"
+                                        min="64"
+                                        max="32768"
+                                        step="64"
+                                        class="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400"
+                                    />
                                 </label>
                                 <label class="text-sm text-slate-300">
                                     CPU cores
-                                    <input v-model.number="dockerCpu" type="number" min="0.1" max="64" step="0.1" class="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400" />
+                                    <input
+                                        v-model.number="dockerCpu"
+                                        type="number"
+                                        min="0.1"
+                                        max="64"
+                                        step="0.1"
+                                        class="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400"
+                                    />
                                 </label>
                                 <label class="text-sm text-slate-300">
                                     Application port
-                                    <input v-model.number="dockerPort" type="number" min="1" max="65535" class="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400" />
+                                    <input
+                                        v-model.number="dockerPort"
+                                        type="number"
+                                        min="1"
+                                        max="65535"
+                                        class="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400"
+                                    />
                                 </label>
                             </div>
-                            <p v-if="dockerUploadError" class="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-300">
+                            <p
+                                v-if="dockerUploadError"
+                                class="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-300"
+                            >
                                 {{ dockerUploadError }}
                             </p>
                         </div>
 
                         <div class="mt-6 flex justify-end gap-3">
-                            <button type="button" @click="closeDockerModal" class="rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-700 hover:text-white">
+                            <button
+                                type="button"
+                                @click="closeDockerModal"
+                                class="rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-700 hover:text-white"
+                            >
                                 Cancel
                             </button>
-                            <button type="button" @click="uploadDockerArchive" class="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400">
+                            <button
+                                type="button"
+                                @click="uploadDockerArchive"
+                                class="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400"
+                            >
                                 Build and run
                             </button>
                         </div>
@@ -870,7 +1055,9 @@ const confirmCancelSubscription = () => {
 
                         <div class="mt-4 space-y-3 text-sm text-slate-300">
                             <p>
-                                This will stop and remove the Docker container, image, uploaded source archive, and deployment record.
+                                This will stop and remove the Docker container,
+                                image, uploaded source archive, and deployment
+                                record.
                             </p>
                             <div
                                 v-if="selectedDockerfile"
@@ -880,7 +1067,9 @@ const confirmCancelSubscription = () => {
                                 <p class="mt-1 font-semibold text-white">
                                     {{ selectedDockerfile.name }}
                                 </p>
-                                <p class="mt-1 font-mono text-xs text-slate-500">
+                                <p
+                                    class="mt-1 font-mono text-xs text-slate-500"
+                                >
                                     {{ selectedDockerfile.image_tag }}
                                 </p>
                             </div>
@@ -901,7 +1090,11 @@ const confirmCancelSubscription = () => {
                                 :disabled="isRemovingDockerfile"
                                 class="flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-rose-600/20 transition hover:bg-rose-500 disabled:opacity-50"
                             >
-                                <span v-if="isRemovingDockerfile" class="animate-spin">...</span>
+                                <span
+                                    v-if="isRemovingDockerfile"
+                                    class="animate-spin"
+                                    >...</span
+                                >
                                 Remove deployment
                             </button>
                         </div>
@@ -969,44 +1162,69 @@ const confirmCancelSubscription = () => {
                         <!-- Modal Body Details -->
                         <div class="mt-4 space-y-4 text-sm text-slate-300">
                             <p>
-                                Are you sure you want to cancel this plan? The server instance will be terminated immediately.
+                                Are you sure you want to cancel this plan? The
+                                server instance will be terminated immediately.
                             </p>
 
                             <div
                                 v-if="selectedSubForCancel"
                                 class="space-y-2 rounded-xl border border-slate-800 bg-slate-950/60 p-4"
                             >
-                                <div class="flex justify-between border-b border-slate-800/80 pb-2">
-                                    <span class="text-xs text-slate-400">Hostname:</span>
-                                    <span class="font-mono text-xs font-semibold text-white">
-                                        {{ selectedSubForCancel.virtual_machine?.name ?? 'N/A' }}
+                                <div
+                                    class="flex justify-between border-b border-slate-800/80 pb-2"
+                                >
+                                    <span class="text-xs text-slate-400"
+                                        >Hostname:</span
+                                    >
+                                    <span
+                                        class="font-mono text-xs font-semibold text-white"
+                                    >
+                                        {{
+                                            selectedSubForCancel.virtual_machine
+                                                ?.name ?? 'N/A'
+                                        }}
                                     </span>
                                 </div>
-                                <div class="flex justify-between border-b border-slate-800/80 pb-2">
-                                    <span class="text-xs text-slate-400">Plan Offer:</span>
+                                <div
+                                    class="flex justify-between border-b border-slate-800/80 pb-2"
+                                >
+                                    <span class="text-xs text-slate-400"
+                                        >Plan Offer:</span
+                                    >
                                     <span class="font-medium text-white">
-                                        {{ selectedSubForCancel.server_offer?.name }}
+                                        {{
+                                            selectedSubForCancel.server_offer
+                                                ?.name
+                                        }}
                                     </span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-xs text-slate-400">Current Status:</span>
+                                    <span class="text-xs text-slate-400"
+                                        >Current Status:</span
+                                    >
                                     <span
                                         class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold capitalize"
                                         :class="
-                                            selectedSubForCancel.virtual_machine?.status === 'running'
-                                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                                : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                                            selectedSubForCancel.virtual_machine
+                                                ?.status === 'running'
+                                                ? 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
+                                                : 'border border-rose-500/20 bg-rose-500/10 text-rose-400'
                                         "
                                     >
                                         <span
                                             class="h-1.5 w-1.5 rounded-full"
                                             :class="
-                                                selectedSubForCancel.virtual_machine?.status === 'running'
-                                                    ? 'bg-emerald-400 animate-pulse'
+                                                selectedSubForCancel
+                                                    .virtual_machine?.status ===
+                                                'running'
+                                                    ? 'animate-pulse bg-emerald-400'
                                                     : 'bg-rose-400'
                                             "
                                         ></span>
-                                        {{ selectedSubForCancel.virtual_machine?.status || 'provisioning' }}
+                                        {{
+                                            selectedSubForCancel.virtual_machine
+                                                ?.status || 'provisioning'
+                                        }}
                                     </span>
                                 </div>
                             </div>
@@ -1027,7 +1245,10 @@ const confirmCancelSubscription = () => {
                                 class="flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-rose-600/30 transition-all hover:bg-rose-500 disabled:opacity-50"
                             >
                                 <span
-                                    v-if="processingCancelId === selectedSubForCancel?.id"
+                                    v-if="
+                                        processingCancelId ===
+                                        selectedSubForCancel?.id
+                                    "
                                     class="animate-spin"
                                     >...</span
                                 >

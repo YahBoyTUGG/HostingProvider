@@ -3,10 +3,6 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 import SiteHeader from '@/components/SiteHeader.vue';
 import { store } from '@/routes/tickets';
 
-defineOptions({
-    layout: null,
-});
-
 interface SubscriptionOption {
     id: number;
     name: string;

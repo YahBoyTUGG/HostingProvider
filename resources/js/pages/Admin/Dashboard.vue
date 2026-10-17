@@ -184,11 +184,8 @@ const ticketStatusFilter = ref<'all' | 'open' | 'answered' | 'closed'>('all');
 const ticketPriorityFilter = ref<'all' | 'low' | 'normal' | 'high'>('all');
 const ticketServiceFilter = ref('all');
 const subscriptionStatusFilter = ref<'all' | Subscription['status']>('all');
-const virtualMachineStatusFilter = ref<
-    'all' | VirtualMachine['status']
->('all');
+const virtualMachineStatusFilter = ref<'all' | VirtualMachine['status']>('all');
 const virtualMachineOperatingSystemFilter = ref<number | 'all'>('all');
-const virtualMachineUserFilter = ref('all');
 const dockerNameFilter = ref('');
 const dockerUserFilter = ref('');
 const processingDockerContainerId = ref<number | null>(null);
@@ -229,6 +226,7 @@ const formatFilterDate = (value: string) => {
 const filteredUsers = computed(() =>
     props.users.filter((user) => {
         const query = search.users.toLowerCase();
+
         return (
             (userRoleFilter.value === 'all' ||
                 user.role === userRoleFilter.value) &&
@@ -241,6 +239,7 @@ const filteredUsers = computed(() =>
 const filteredOffers = computed(() =>
     props.offers.filter((offer) => {
         const query = search.offers.toLowerCase();
+
         return (
             (offerTypeFilter.value === 'all' ||
                 offer.type === offerTypeFilter.value) &&
@@ -283,6 +282,7 @@ const availableFeaturedOffers = computed(() => {
 const filteredContacts = computed(() =>
     props.contacts.filter((contact) => {
         const query = search.contacts.toLowerCase();
+
         return (
             (contactReadFilter.value === 'all' ||
                 (contactReadFilter.value === 'read' && contact.is_read) ||
@@ -338,22 +338,11 @@ const filteredVirtualMachines = computed(() =>
             (virtualMachineOperatingSystemFilter.value === 'all' ||
                 virtualMachine.operating_system?.id ===
                     virtualMachineOperatingSystemFilter.value) &&
-            (virtualMachineUserFilter.value === 'all' ||
-                userEmail === virtualMachineUserFilter.value) &&
             `${virtualMachine.name} ${virtualMachine.ip_address} ${userEmail}`
                 .toLowerCase()
                 .includes(query)
         );
     }),
-);
-const virtualMachineUsers = computed(() =>
-    [
-        ...new Set(
-            props.virtualMachines
-                .map((virtualMachine) => virtualMachine.subscription?.user?.email)
-                .filter((email): email is string => Boolean(email)),
-        ),
-    ].sort(),
 );
 const filteredDockerfiles = computed(() =>
     props.dockerfiles.filter((dockerfile) => {
@@ -372,9 +361,7 @@ const filteredDockerfiles = computed(() =>
 
 const ticketServices = computed(() =>
     [
-        ...new Set(
-            props.tickets.map((ticket) => getTicketServiceName(ticket)),
-        ),
+        ...new Set(props.tickets.map((ticket) => getTicketServiceName(ticket))),
     ].sort(),
 );
 
@@ -396,8 +383,13 @@ const toggleTicketDetails = (ticketId: number) => {
 };
 
 const ticketStatusClass = (status: string) => {
-    if (status === 'closed') return 'bg-slate-800 text-slate-300';
-    if (status === 'answered') return 'bg-emerald-400/10 text-emerald-300';
+    if (status === 'closed') {
+        return 'bg-slate-800 text-slate-300';
+    }
+
+    if (status === 'answered') {
+        return 'bg-emerald-400/10 text-emerald-300';
+    }
 
     return 'bg-amber-400/10 text-amber-300';
 };
@@ -465,6 +457,7 @@ const promote = (user: User) => {
 const demote = (user: User) => {
     if (page.props.auth.user.id === user.id) {
         isSelfDemotionModalOpen.value = true;
+
         return;
     }
 
@@ -472,21 +465,29 @@ const demote = (user: User) => {
 };
 
 const confirmUserRoleChange = () => {
-    if (!userPendingRoleChange.value) return;
+    if (!userPendingRoleChange.value) {
+        return;
+    }
 
     const { user, action } = userPendingRoleChange.value;
-    router.post(`/admin/users/${user.id}/${action}`, {}, {
-        onSuccess: () => {
-            userPendingRoleChange.value = null;
+    router.post(
+        `/admin/users/${user.id}/${action}`,
+        {},
+        {
+            onSuccess: () => {
+                userPendingRoleChange.value = null;
+            },
         },
-    });
+    );
 };
 const deleteUser = (user: User) => {
     userPendingDelete.value = user;
 };
 
 const confirmDeleteUser = () => {
-    if (!userPendingDelete.value) return;
+    if (!userPendingDelete.value) {
+        return;
+    }
 
     const user = userPendingDelete.value;
     router.delete(`/admin/users/${user.id}`, {
@@ -518,8 +519,9 @@ const resetOffer = () => {
 };
 
 const deleteOffer = (offer: Offer) => {
-    if (window.confirm(`Delete the ${offer.name} offer?`))
+    if (window.confirm(`Delete the ${offer.name} offer?`)) {
         router.delete(`/admin/offers/${offer.id}`);
+    }
 };
 
 const editFeaturedOffer = (feature: FeaturedOffer) => {
@@ -545,7 +547,9 @@ const resetFeaturedOffer = () => {
 };
 
 const updateFeaturedOffer = () => {
-    if (!editingFeatureId.value) return;
+    if (!editingFeatureId.value) {
+        return;
+    }
 
     router.put(
         `/admin/featured-offers/${editingFeatureId.value}`,
@@ -566,7 +570,9 @@ const closeFeatureModal = () => {
 };
 
 const createFeaturedOffer = () => {
-    if (!newFeatureForm.server_offer_id) return;
+    if (!newFeatureForm.server_offer_id) {
+        return;
+    }
 
     router.post('/admin/featured-offers', newFeatureForm, {
         onSuccess: closeFeatureModal,
@@ -587,7 +593,10 @@ const markRead = (contact: Contact) =>
     router.post(`/admin/contacts/${contact.id}/read`);
 const sendReply = (ticket: Ticket) => {
     const message = responseForms[ticket.id]?.trim();
-    if (!message) return;
+
+    if (!message) {
+        return;
+    }
 
     router.post(
         `/admin/tickets/${ticket.id}/reply`,
@@ -605,34 +614,33 @@ const closeTicket = (ticket: Ticket) => {
 };
 
 const confirmCloseTicket = () => {
-    if (!ticketPendingClose.value) return;
+    if (!ticketPendingClose.value) {
+        return;
+    }
 
     const ticket = ticketPendingClose.value;
-    router.post(`/admin/tickets/${ticket.id}/close`, {}, {
-        onSuccess: () => {
-            ticketPendingClose.value = null;
-            const expandedIds = new Set(expandedTicketIds.value);
-            expandedIds.delete(ticket.id);
-            expandedTicketIds.value = expandedIds;
+    router.post(
+        `/admin/tickets/${ticket.id}/close`,
+        {},
+        {
+            onSuccess: () => {
+                ticketPendingClose.value = null;
+                const expandedIds = new Set(expandedTicketIds.value);
+                expandedIds.delete(ticket.id);
+                expandedTicketIds.value = expandedIds;
+            },
         },
-    });
+    );
 };
-
-const updateSubscriptionStatus = (subscription: Subscription) =>
-    router.put(`/admin/subscriptions/${subscription.id}/status`, {
-        status: subscription.status,
-    });
-
-const updateVirtualMachineStatus = (virtualMachine: VirtualMachine) =>
-    router.put(`/admin/virtual-machines/${virtualMachine.id}/status`, {
-        status: virtualMachine.status,
-    });
 
 const setSubscriptionStatus = (
     subscription: Subscription,
     status: Subscription['status'],
 ) => {
-    if (subscription.status === status) return;
+    if (subscription.status === status) {
+        return;
+    }
+
     subscription.status = status;
     router.put(`/admin/subscriptions/${subscription.id}/status`, { status });
 };
@@ -641,9 +649,14 @@ const setVirtualMachineStatus = (
     virtualMachine: VirtualMachine,
     status: VirtualMachine['status'],
 ) => {
-    if (virtualMachine.status === status) return;
+    if (virtualMachine.status === status) {
+        return;
+    }
+
     virtualMachine.status = status;
-    router.put(`/admin/virtual-machines/${virtualMachine.id}/status`, { status });
+    router.put(`/admin/virtual-machines/${virtualMachine.id}/status`, {
+        status,
+    });
 };
 
 const toggleDockerContainerPause = (container: DockerContainer) => {
@@ -667,7 +680,11 @@ const toggleDockerContainerPause = (container: DockerContainer) => {
 };
 
 const removeDockerfile = (dockerfile: Dockerfile) => {
-    if (!window.confirm(`Remove ${dockerfile.name}, its container, image, and source code?`)) {
+    if (
+        !window.confirm(
+            `Remove ${dockerfile.name}, its container, image, and source code?`,
+        )
+    ) {
         return;
     }
 
@@ -675,8 +692,6 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
         preserveScroll: true,
     });
 };
-
-
 </script>
 
 <template>
@@ -687,9 +702,7 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
 
         <main class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
             <div class="mb-8">
-                <h1 class="text-3xl font-bold text-white">
-                    Admin dashboard
-                </h1>
+                <h1 class="text-3xl font-bold text-white">Admin dashboard</h1>
                 <p class="mt-1 text-slate-400">
                     Manage people, infrastructure, customer messages, and
                     support.
@@ -1555,132 +1568,173 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
                     type="button"
                     class="admin-button w-full py-4 text-base"
                     @click="openFeatureModal"
-                    >
+                >
                     New feature
                 </button>
-
             </section>
 
             <section
-    v-else-if="activeTab === 'subscriptions'"
-    class="space-y-4"
->
-    <div class="flex flex-wrap gap-3">
-        <input
-            v-model="search.subscriptions"
-            placeholder="Filter by user email..."
-            type="email"
-            class="admin-input min-w-64 flex-1"
-        />
-        <select
-            v-model="subscriptionStatusFilter"
-            class="admin-input w-44"
-        >
-            <option value="all">All statuses</option>
-            <option value="active">Active</option>
-            <option value="cancelled">Cancelled</option>
-            <option value="expired">Expired</option>
-        </select>
-    </div>
-    <p class="text-xs text-slate-500">
-        {{ filteredSubscriptions.length }} subscriptions found
-    </p>
-    <div class="space-y-3">
-        <article
-            v-for="subscription in filteredSubscriptions"
-            :key="subscription.id"
-            class="admin-card rounded-xl border border-slate-800 bg-slate-900 p-5"
-        >
-            <div class="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <p class="font-semibold text-white">
-                        {{ subscription.server_offer?.name ?? 'Subscription' }}
-                    </p>
-                    <p class="text-sm text-slate-400">
-                        {{ subscription.user?.email ?? 'Unknown user' }} ·
-                        {{ subscription.billing_cycle }} · ${{ subscription.cost }}
-                    </p>
-                    <p class="mt-1 text-xs text-slate-500">
-                        {{ new Date(subscription.starts_at).toLocaleDateString() }}
-                        to {{ new Date(subscription.ends_at).toLocaleDateString() }}
-                    </p>
+                v-else-if="activeTab === 'subscriptions'"
+                class="space-y-4"
+            >
+                <div class="flex flex-wrap gap-3">
+                    <input
+                        v-model="search.subscriptions"
+                        placeholder="Filter by user email..."
+                        type="email"
+                        class="admin-input min-w-64 flex-1"
+                    />
+                    <select
+                        v-model="subscriptionStatusFilter"
+                        class="admin-input w-44"
+                    >
+                        <option value="all">All statuses</option>
+                        <option value="active">Active</option>
+                        <option value="cancelled">Cancelled</option>
+                        <option value="expired">Expired</option>
+                    </select>
                 </div>
-                <div class="inline-flex rounded-lg border border-slate-800 bg-slate-950 p-1">
-                    <button
-                        type="button"
-                        class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
-                        :class="
-                            subscription.status === 'active'
-                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                                : 'text-slate-400 hover:text-slate-200'
-                        "
-                        @click="setSubscriptionStatus(subscription, 'active')"
+                <p class="text-xs text-slate-500">
+                    {{ filteredSubscriptions.length }} subscriptions found
+                </p>
+                <div class="space-y-3">
+                    <article
+                        v-for="subscription in filteredSubscriptions"
+                        :key="subscription.id"
+                        class="admin-card rounded-xl border border-slate-800 bg-slate-900 p-5"
                     >
-                        Active
-                    </button>
-                    <button
-                        type="button"
-                        class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
-                        :class="
-                            subscription.status === 'cancelled'
-                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                                : 'text-slate-400 hover:text-slate-200'
-                        "
-                        @click="setSubscriptionStatus(subscription, 'cancelled')"
-                    >
-                        Cancelled
-                    </button>
-                    <button
-                        type="button"
-                        class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
-                        :class="
-                            subscription.status === 'expired'
-                                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                                : 'text-slate-400 hover:text-slate-200'
-                        "
-                        @click="setSubscriptionStatus(subscription, 'expired')"
-                    >
-                        Expired
-                    </button>
+                        <div
+                            class="flex flex-wrap items-center justify-between gap-4"
+                        >
+                            <div>
+                                <p class="font-semibold text-white">
+                                    {{
+                                        subscription.server_offer?.name ??
+                                        'Subscription'
+                                    }}
+                                </p>
+                                <p class="text-sm text-slate-400">
+                                    {{
+                                        subscription.user?.email ??
+                                        'Unknown user'
+                                    }}
+                                    · {{ subscription.billing_cycle }} · ${{
+                                        subscription.cost
+                                    }}
+                                </p>
+                                <p class="mt-1 text-xs text-slate-500">
+                                    {{
+                                        new Date(
+                                            subscription.starts_at,
+                                        ).toLocaleDateString()
+                                    }}
+                                    to
+                                    {{
+                                        new Date(
+                                            subscription.ends_at,
+                                        ).toLocaleDateString()
+                                    }}
+                                </p>
+                            </div>
+                            <div
+                                class="inline-flex rounded-lg border border-slate-800 bg-slate-950 p-1"
+                            >
+                                <button
+                                    type="button"
+                                    class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
+                                    :class="
+                                        subscription.status === 'active'
+                                            ? 'border border-emerald-500/30 bg-emerald-500/20 text-emerald-300'
+                                            : 'text-slate-400 hover:text-slate-200'
+                                    "
+                                    @click="
+                                        setSubscriptionStatus(
+                                            subscription,
+                                            'active',
+                                        )
+                                    "
+                                >
+                                    Active
+                                </button>
+                                <button
+                                    type="button"
+                                    class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
+                                    :class="
+                                        subscription.status === 'cancelled'
+                                            ? 'border border-amber-500/30 bg-amber-500/20 text-amber-300'
+                                            : 'text-slate-400 hover:text-slate-200'
+                                    "
+                                    @click="
+                                        setSubscriptionStatus(
+                                            subscription,
+                                            'cancelled',
+                                        )
+                                    "
+                                >
+                                    Cancelled
+                                </button>
+                                <button
+                                    type="button"
+                                    class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
+                                    :class="
+                                        subscription.status === 'expired'
+                                            ? 'border border-rose-500/30 bg-rose-500/20 text-rose-300'
+                                            : 'text-slate-400 hover:text-slate-200'
+                                    "
+                                    @click="
+                                        setSubscriptionStatus(
+                                            subscription,
+                                            'expired',
+                                        )
+                                    "
+                                >
+                                    Expired
+                                </button>
+                            </div>
+                        </div>
+                    </article>
                 </div>
-            </div>
-        </article>
-    </div>
-    <p v-if="!filteredSubscriptions.length" class="text-slate-400">
-        No subscriptions match the current filter.
-    </p>
-</section>
+                <p v-if="!filteredSubscriptions.length" class="text-slate-400">
+                    No subscriptions match the current filter.
+                </p>
+            </section>
 
             <section
-    v-else-if="activeTab === 'virtual-machines'"
-    class="space-y-4"
->
-    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <input
-            v-model="search['virtual-machines']"
-            placeholder="Search machines..."
-            class="admin-input"
-        />
-        <select v-model="virtualMachineStatusFilter" class="admin-input">
-            <option value="all">All statuses</option>
-            <option value="running">Running</option>
-            <option value="stopped">Stopped</option>
-            <option value="provisioning">Provisioning</option>
-        </select>
-        <select
-            v-model="virtualMachineOperatingSystemFilter"
-            class="admin-input"
-        >
-            <option value="all">All operating systems</option>
-            <option
-                v-for="operatingSystem in props.operatingSystems"
-                :key="operatingSystem.id"
-                :value="operatingSystem.id"
+                v-else-if="activeTab === 'virtual-machines'"
+                class="space-y-4"
             >
-                {{ operatingSystem.name }} {{ operatingSystem.version }}
-            </option>
-        </select>
-        <!--
+                <div
+                    class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
+                >
+                    <input
+                        v-model="search['virtual-machines']"
+                        placeholder="Search machines..."
+                        class="admin-input"
+                    />
+                    <select
+                        v-model="virtualMachineStatusFilter"
+                        class="admin-input"
+                    >
+                        <option value="all">All statuses</option>
+                        <option value="running">Running</option>
+                        <option value="stopped">Stopped</option>
+                        <option value="provisioning">Provisioning</option>
+                    </select>
+                    <select
+                        v-model="virtualMachineOperatingSystemFilter"
+                        class="admin-input"
+                    >
+                        <option value="all">All operating systems</option>
+                        <option
+                            v-for="operatingSystem in props.operatingSystems"
+                            :key="operatingSystem.id"
+                            :value="operatingSystem.id"
+                        >
+                            {{ operatingSystem.name }}
+                            {{ operatingSystem.version }}
+                        </option>
+                    </select>
+                    <!--
         <select v-model="virtualMachineUserFilter" class="admin-input">
             <option value="all">All users</option>
             <option v-for="email in virtualMachineUsers" :key="email" :value="email">
@@ -1688,74 +1742,108 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
             </option>
         </select>
         -->
-    </div>
-    <p class="text-xs text-slate-500">
-        {{ filteredVirtualMachines.length }} virtual machines found
-    </p>
-    <div class="space-y-3">
-        <article
-            v-for="virtualMachine in filteredVirtualMachines"
-            :key="virtualMachine.id"
-            class="admin-card rounded-xl border border-slate-800 bg-slate-900 p-5"
-        >
-            <div class="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <p class="font-semibold text-white">{{ virtualMachine.name }}</p>
-                    <p class="text-sm text-slate-400">
-                        {{ virtualMachine.ip_address }} ·
-                        {{ virtualMachine.operating_system?.name }}
-                        {{ virtualMachine.operating_system?.version }}
-                    </p>
-                    <p class="mt-1 text-xs text-slate-500">
-                        {{ virtualMachine.subscription?.user?.email ?? 'Unknown user' }} ·
-                        {{ virtualMachine.subscription?.server_offer?.name ?? 'Unknown offer' }}
-                    </p>
                 </div>
-                <div class="inline-flex rounded-lg border border-slate-800 bg-slate-950 p-1">
-                    <button
-                        type="button"
-                        class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
-                        :class="
-                            virtualMachine.status === 'running'
-                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                                : 'text-slate-400 hover:text-slate-200'
-                        "
-                        @click="setVirtualMachineStatus(virtualMachine, 'running')"
+                <p class="text-xs text-slate-500">
+                    {{ filteredVirtualMachines.length }} virtual machines found
+                </p>
+                <div class="space-y-3">
+                    <article
+                        v-for="virtualMachine in filteredVirtualMachines"
+                        :key="virtualMachine.id"
+                        class="admin-card rounded-xl border border-slate-800 bg-slate-900 p-5"
                     >
-                        Running
-                    </button>
-                    <button
-                        type="button"
-                        class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
-                        :class="
-                            virtualMachine.status === 'stopped'
-                                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                                : 'text-slate-400 hover:text-slate-200'
-                        "
-                        @click="setVirtualMachineStatus(virtualMachine, 'stopped')"
-                    >
-                        Stopped
-                    </button>
-                    <button
-                        type="button"
-                        class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
-                        :class="
-                            virtualMachine.status === 'provisioning'
-                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                                : 'text-slate-400 hover:text-slate-200'
-                        "
-                        @click="setVirtualMachineStatus(virtualMachine, 'provisioning')"
-                    >
-                        Provisioning
-                    </button>
+                        <div
+                            class="flex flex-wrap items-center justify-between gap-4"
+                        >
+                            <div>
+                                <p class="font-semibold text-white">
+                                    {{ virtualMachine.name }}
+                                </p>
+                                <p class="text-sm text-slate-400">
+                                    {{ virtualMachine.ip_address }} ·
+                                    {{ virtualMachine.operating_system?.name }}
+                                    {{
+                                        virtualMachine.operating_system?.version
+                                    }}
+                                </p>
+                                <p class="mt-1 text-xs text-slate-500">
+                                    {{
+                                        virtualMachine.subscription?.user
+                                            ?.email ?? 'Unknown user'
+                                    }}
+                                    ·
+                                    {{
+                                        virtualMachine.subscription
+                                            ?.server_offer?.name ??
+                                        'Unknown offer'
+                                    }}
+                                </p>
+                            </div>
+                            <div
+                                class="inline-flex rounded-lg border border-slate-800 bg-slate-950 p-1"
+                            >
+                                <button
+                                    type="button"
+                                    class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
+                                    :class="
+                                        virtualMachine.status === 'running'
+                                            ? 'border border-emerald-500/30 bg-emerald-500/20 text-emerald-300'
+                                            : 'text-slate-400 hover:text-slate-200'
+                                    "
+                                    @click="
+                                        setVirtualMachineStatus(
+                                            virtualMachine,
+                                            'running',
+                                        )
+                                    "
+                                >
+                                    Running
+                                </button>
+                                <button
+                                    type="button"
+                                    class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
+                                    :class="
+                                        virtualMachine.status === 'stopped'
+                                            ? 'border border-rose-500/30 bg-rose-500/20 text-rose-300'
+                                            : 'text-slate-400 hover:text-slate-200'
+                                    "
+                                    @click="
+                                        setVirtualMachineStatus(
+                                            virtualMachine,
+                                            'stopped',
+                                        )
+                                    "
+                                >
+                                    Stopped
+                                </button>
+                                <button
+                                    type="button"
+                                    class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
+                                    :class="
+                                        virtualMachine.status === 'provisioning'
+                                            ? 'border border-amber-500/30 bg-amber-500/20 text-amber-300'
+                                            : 'text-slate-400 hover:text-slate-200'
+                                    "
+                                    @click="
+                                        setVirtualMachineStatus(
+                                            virtualMachine,
+                                            'provisioning',
+                                        )
+                                    "
+                                >
+                                    Provisioning
+                                </button>
+                            </div>
+                        </div>
+                    </article>
                 </div>
-            </div>
-        </article>
-    </div>
-    <p v-if="!filteredVirtualMachines.length" class="text-slate-400">
-        No virtual machines match the current filter.
-    </p>
-</section>
+                <p
+                    v-if="!filteredVirtualMachines.length"
+                    class="text-slate-400"
+                >
+                    No virtual machines match the current filter.
+                </p>
+            </section>
 
             <section v-else-if="activeTab === 'docker'" class="space-y-4">
                 <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -1780,49 +1868,91 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
                         :key="dockerfile.id"
                         class="admin-card rounded-xl border border-slate-800 bg-slate-900 p-5"
                     >
-                        <div class="flex flex-wrap items-start justify-between gap-4">
+                        <div
+                            class="flex flex-wrap items-start justify-between gap-4"
+                        >
                             <div class="min-w-0">
-                                <p class="font-semibold text-white">{{ dockerfile.name }}</p>
-                                <p class="mt-1 break-all font-mono text-xs text-slate-400">
+                                <p class="font-semibold text-white">
+                                    {{ dockerfile.name }}
+                                </p>
+                                <p
+                                    class="mt-1 font-mono text-xs break-all text-slate-400"
+                                >
                                     {{ dockerfile.image_tag }}
                                 </p>
                                 <p class="mt-2 text-xs text-slate-500">
-                                    Uploaded by {{ dockerfile.user?.email ?? 'Unknown user' }}
+                                    Uploaded by
+                                    {{
+                                        dockerfile.user?.email ?? 'Unknown user'
+                                    }}
                                 </p>
                             </div>
                             <span
                                 class="rounded-full px-2.5 py-1 text-xs font-semibold capitalize"
-                                :class="dockerfile.user_containers[0]?.is_paused
-                                    ? 'bg-amber-500/10 text-amber-300'
-                                    : dockerfile.user_containers[0]?.status === 'running'
-                                        ? 'bg-emerald-500/10 text-emerald-300'
-                                        : dockerfile.build_status === 'failed'
+                                :class="
+                                    dockerfile.user_containers[0]?.is_paused
+                                        ? 'bg-amber-500/10 text-amber-300'
+                                        : dockerfile.user_containers[0]
+                                                ?.status === 'running'
+                                          ? 'bg-emerald-500/10 text-emerald-300'
+                                          : dockerfile.build_status === 'failed'
                                             ? 'bg-rose-500/10 text-rose-300'
-                                            : 'bg-slate-700 text-slate-300'"
+                                            : 'bg-slate-700 text-slate-300'
+                                "
                             >
-                                {{ dockerfile.user_containers[0]?.status ?? dockerfile.build_status }}
+                                {{
+                                    dockerfile.user_containers[0]?.status ??
+                                    dockerfile.build_status
+                                }}
                             </span>
                         </div>
 
                         <div class="mt-4 grid grid-cols-2 gap-3 text-xs">
-                            <div class="rounded-lg border border-slate-800 bg-slate-950 p-3">
-                                <span class="block text-slate-500">Container</span>
-                                <span class="mt-1 block break-all font-mono text-slate-300">
-                                    {{ dockerfile.user_containers[0]?.container_id ?? 'Not created' }}
+                            <div
+                                class="rounded-lg border border-slate-800 bg-slate-950 p-3"
+                            >
+                                <span class="block text-slate-500"
+                                    >Container</span
+                                >
+                                <span
+                                    class="mt-1 block font-mono break-all text-slate-300"
+                                >
+                                    {{
+                                        dockerfile.user_containers[0]
+                                            ?.container_id ?? 'Not created'
+                                    }}
                                 </span>
                             </div>
-                            <div class="rounded-lg border border-slate-800 bg-slate-950 p-3">
-                                <span class="block text-slate-500">Port mapping</span>
+                            <div
+                                class="rounded-lg border border-slate-800 bg-slate-950 p-3"
+                            >
+                                <span class="block text-slate-500"
+                                    >Port mapping</span
+                                >
                                 <span class="mt-1 block text-slate-300">
-                                    {{ dockerfile.user_containers[0]?.container_port ?? '-' }} → :{{ dockerfile.user_containers[0]?.host_port ?? '-' }}
+                                    {{
+                                        dockerfile.user_containers[0]
+                                            ?.container_port ?? '-'
+                                    }}
+                                    → :{{
+                                        dockerfile.user_containers[0]
+                                            ?.host_port ?? '-'
+                                    }}
                                 </span>
                             </div>
                         </div>
 
                         <div class="mt-4 flex flex-wrap items-center gap-2">
                             <a
-                                v-if="dockerfile.user_containers[0]?.status === 'running'"
-                                :href="containerAccessUrl(dockerfile.user_containers[0].host_port)"
+                                v-if="
+                                    dockerfile.user_containers[0]?.status ===
+                                    'running'
+                                "
+                                :href="
+                                    containerAccessUrl(
+                                        dockerfile.user_containers[0].host_port,
+                                    )
+                                "
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 class="admin-secondary text-emerald-300 hover:text-emerald-200"
@@ -1830,13 +1960,29 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
                                 View
                             </a>
                             <button
-                                v-if="dockerfile.user_containers[0] && (dockerfile.user_containers[0].status === 'running' || dockerfile.user_containers[0].is_paused)"
+                                v-if="
+                                    dockerfile.user_containers[0] &&
+                                    (dockerfile.user_containers[0].status ===
+                                        'running' ||
+                                        dockerfile.user_containers[0].is_paused)
+                                "
                                 type="button"
-                                :disabled="processingDockerContainerId === dockerfile.user_containers[0].id"
+                                :disabled="
+                                    processingDockerContainerId ===
+                                    dockerfile.user_containers[0].id
+                                "
                                 class="admin-secondary"
-                                @click="toggleDockerContainerPause(dockerfile.user_containers[0])"
+                                @click="
+                                    toggleDockerContainerPause(
+                                        dockerfile.user_containers[0],
+                                    )
+                                "
                             >
-                                {{ dockerfile.user_containers[0].is_paused ? 'Resume container' : 'Pause container' }}
+                                {{
+                                    dockerfile.user_containers[0].is_paused
+                                        ? 'Resume container'
+                                        : 'Pause container'
+                                }}
                             </button>
                             <button
                                 type="button"
@@ -1847,11 +1993,18 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
                             </button>
                         </div>
 
-                        <details v-if="dockerfile.build_log" class="mt-4 rounded-lg border border-slate-800 bg-slate-950">
-                            <summary class="cursor-pointer px-3 py-2 text-xs font-semibold text-slate-400 hover:text-white">
+                        <details
+                            v-if="dockerfile.build_log"
+                            class="mt-4 rounded-lg border border-slate-800 bg-slate-950"
+                        >
+                            <summary
+                                class="cursor-pointer px-3 py-2 text-xs font-semibold text-slate-400 hover:text-white"
+                            >
                                 View build log
                             </summary>
-                            <pre class="max-h-48 overflow-auto whitespace-pre-wrap break-words border-t border-slate-800 p-3 font-mono text-xs leading-5 text-slate-400">{{ dockerfile.build_log }}</pre>
+                            <pre
+                                class="max-h-48 overflow-auto border-t border-slate-800 p-3 font-mono text-xs leading-5 break-words whitespace-pre-wrap text-slate-400"
+                                >{{ dockerfile.build_log }}</pre>
                         </details>
                     </article>
                 </div>
@@ -2071,7 +2224,9 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
                     >
                         <div class="min-h-0 overflow-hidden">
                             <div class="border-t border-slate-800 p-5">
-                                <div class="flex flex-wrap justify-between gap-3">
+                                <div
+                                    class="flex flex-wrap justify-between gap-3"
+                                >
                                     <p class="text-xs text-slate-500">
                                         Ticket #{{ ticket.id }} ·
                                         {{ getTicketServiceName(ticket) }}
@@ -2177,40 +2332,43 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
                     <dl class="mt-6 grid gap-4 sm:grid-cols-2">
                         <div>
                             <dt class="admin-label">First name</dt>
-                            <dd class="break-words text-sm text-slate-200">
+                            <dd class="text-sm break-words text-slate-200">
                                 {{ selectedUser.first_name }}
                             </dd>
                         </div>
                         <div>
                             <dt class="admin-label">Last name</dt>
-                            <dd class="break-words text-sm text-slate-200">
+                            <dd class="text-sm break-words text-slate-200">
                                 {{ selectedUser.last_name }}
                             </dd>
                         </div>
                         <div>
                             <dt class="admin-label">Email</dt>
-                            <dd class="break-words text-sm text-slate-200">
+                            <dd class="text-sm break-words text-slate-200">
                                 {{ selectedUser.email }}
                             </dd>
                         </div>
                         <div>
                             <dt class="admin-label">Role</dt>
-                            <dd
-                                class="text-sm text-slate-200 capitalize"
-                            >
+                            <dd class="text-sm text-slate-200 capitalize">
                                 {{ selectedUser.role }}
                             </dd>
                         </div>
                         <div class="sm:col-span-2">
                             <dt class="admin-label">Address</dt>
-                            <dd class="break-words text-sm text-slate-200">
-                                {{ selectedUser.living_address || 'Not provided' }}
+                            <dd class="text-sm break-words text-slate-200">
+                                {{
+                                    selectedUser.living_address ||
+                                    'Not provided'
+                                }}
                             </dd>
                         </div>
                         <div class="sm:col-span-2">
                             <dt class="admin-label">Phone number</dt>
-                            <dd class="break-words text-sm text-slate-200">
-                                {{ selectedUser.phone_number || 'Not provided' }}
+                            <dd class="text-sm break-words text-slate-200">
+                                {{
+                                    selectedUser.phone_number || 'Not provided'
+                                }}
                             </dd>
                         </div>
                     </dl>
