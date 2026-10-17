@@ -1,8 +1,1 @@
-[Sat Oct 17 21:47:49 2026] 127.0.0.1:10556 [GET] URI: /catalog
-[Sat Oct 17 21:47:49 2026] 127.0.0.1:3111 [GET] URI: /catalog
-[Sat Oct 17 21:47:51 2026] 127.0.0.1:1192 [GET] URI: /tickets
-[Sat Oct 17 21:47:53 2026] 127.0.0.1:34008 [GET] URI: /dashboard
-[Sat Oct 17 21:47:54 2026] 127.0.0.1:39612 [GET] URI: /admin/dashboard
-[Sat Oct 17 21:47:59 2026] 127.0.0.1:11965 [GET] URI: /
-[Sat Oct 17 21:48:03 2026] 127.0.0.1:46511 [GET] URI: /admin/dashboard
-[Sat Oct 17 21:48:09 2026] 127.0.0.1:28285 [GET] URI: /
+{"tool":"pest","result":"passed","tests":31,"passed":31,"assertions":109,"duration_ms":3136}

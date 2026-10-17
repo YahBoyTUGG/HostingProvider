@@ -1,4 +1,6 @@
 /.phpunit.cache
+/.stack-data
+/.env
 /bootstrap/ssr
 /node_modules
 /public/build
