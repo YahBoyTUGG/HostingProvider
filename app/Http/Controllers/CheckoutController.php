@@ -64,6 +64,11 @@ class CheckoutController extends Controller
             $validated['apps'] ?? []
         );
 
-        return redirect()->route('dashboard')->with('success', 'Server provisioned successfully!');
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Server provisioned successfully!',
+        ]);
+
+        return redirect()->route('dashboard');
     }
 }

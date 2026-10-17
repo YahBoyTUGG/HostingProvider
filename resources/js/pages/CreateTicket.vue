@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { store } from '@/routes/tickets';
 import SiteHeader from '@/components/SiteHeader.vue';
+import { store } from '@/routes/tickets';
 
 defineOptions({
     layout: null,
@@ -17,14 +17,44 @@ const props = defineProps<{
     subscriptions?: SubscriptionOption[];
 }>();
 
+const ticketServices = [
+    'General account inquiry',
+    'Docker containers',
+    'Dockerfile upload',
+    'Server performance',
+    'Networking',
+    'Billing and payments',
+    'Account access',
+    'Other',
+];
+const defaultSubscription = props.subscriptions?.[0];
+
 const form = useForm({
-    subscription_id: props.subscriptions?.[0]?.id || '',
+    selected_service: defaultSubscription
+        ? `subscription:${defaultSubscription.id}`
+        : `service:${ticketServices[0]}`,
+    affected_service: defaultSubscription ? 'Plan' : ticketServices[0],
+    subscription_id: defaultSubscription?.id || '',
     priority: 'normal',
     subject: '',
     message: '',
 });
 
 const submitTicket = () => {
+    form.transform(({ selected_service, ...data }) => {
+        const [selectionType, selectionValue] = selected_service.split(':', 2);
+
+        return {
+            ...data,
+            affected_service:
+                selectionType === 'subscription' ? 'Plan' : selectionValue,
+            subscription_id:
+                selectionType === 'subscription'
+                    ? Number(selectionValue)
+                    : null,
+        };
+    });
+
     form.post(store.url(), {
         onSuccess: () => form.reset(),
     });
@@ -71,22 +101,41 @@ const submitTicket = () => {
                             >Affected Service</label
                         >
                         <select
-                            v-model="form.subscription_id"
+                            v-model="form.selected_service"
                             class="w-full rounded-xl border border-slate-700 bg-slate-900/80 px-3.5 py-2.5 text-sm text-slate-200 focus:border-indigo-500 focus:outline-none"
                         >
-                            <option value="">General Account Inquiry</option>
-                            <option
-                                v-for="sub in props.subscriptions"
-                                :key="sub.id"
-                                :value="sub.id"
+                            <optgroup label="Support topics">
+                                <option
+                                    v-for="service in ticketServices"
+                                    :key="service"
+                                    :value="`service:${service}`"
+                                >
+                                    {{ service }}
+                                </option>
+                            </optgroup>
+                            <optgroup
+                                v-if="props.subscriptions?.length"
+                                label="Your plans"
                             >
-                                {{ sub.name }} ({{ sub.ip_address }})
-                            </option>
+                                <option
+                                    v-for="sub in props.subscriptions"
+                                    :key="sub.id"
+                                    :value="`subscription:${sub.id}`"
+                                >
+                                    {{ sub.name }} ({{ sub.ip_address }})
+                                </option>
+                            </optgroup>
                         </select>
                         <span
-                            v-if="form.errors.subscription_id"
+                            v-if="
+                                form.errors.subscription_id ||
+                                form.errors.affected_service
+                            "
                             class="mt-1 block text-xs text-rose-400"
-                            >{{ form.errors.subscription_id }}</span
+                            >{{
+                                form.errors.subscription_id ||
+                                form.errors.affected_service
+                            }}</span
                         >
                     </div>
 

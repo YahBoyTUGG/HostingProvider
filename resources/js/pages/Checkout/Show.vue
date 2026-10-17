@@ -13,6 +13,8 @@ interface Offer {
     storage_amount_gb: number;
     storage_type: string;
     bandwidth_tb: number;
+    gpu_model: string | null;
+    gpu_count: number;
     price_monthly: number | string;
     price_6_months: number | string | null;
     price_1_year: number | string;
@@ -102,7 +104,7 @@ const confirmSubmit = () => {
             <div class="mb-8">
                 <Link href="/catalog" class="text-sm text-indigo-300 hover:text-indigo-200">&larr; Back to catalog</Link>
                 <h1 class="mt-4 text-3xl font-bold text-white">Configure {{ offer.name }}</h1>
-                <p class="mt-2 text-slate-400">Choose your service term and simulated payment details to provision your server.</p>
+                <p class="mt-2 text-slate-400">Choose your service term and provide billing details to continue with your server order.</p>
             </div>
 
             <form class="grid gap-6 lg:grid-cols-[1fr_360px]" @submit.prevent="submit">
@@ -137,8 +139,8 @@ const confirmSubmit = () => {
                     </section>
 
                     <section class="rounded-xl border border-slate-800 bg-slate-900 p-6">
-                        <h2 class="text-lg font-semibold text-white">Simulated payment</h2>
-                        <p class="mt-1 text-sm text-slate-400">Use any Visa-style details. This demo does not contact a payment provider or store card data.</p>
+                        <h2 class="text-lg font-semibold text-white">Billing information</h2>
+                        <p class="mt-1 text-sm text-slate-400">Your billing details are used to validate the order.</p>
                         <div class="mt-5 grid gap-4 sm:grid-cols-2">
                             <label class="sm:col-span-2"><span class="mb-2 block text-sm font-medium text-slate-200">Cardholder name</span><input v-model="form.cardholder_name" required class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-slate-100 shadow-sm outline-none transition placeholder:text-slate-600 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/30" autocomplete="cc-name" /></label>
                             <label class="sm:col-span-2"><span class="mb-2 block text-sm font-medium text-slate-200">Card number</span><input v-model="form.card_number" required inputmode="numeric" autocomplete="cc-number" placeholder="4242 4242 4242 4242" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm tracking-wider text-slate-100 shadow-sm outline-none transition placeholder:text-slate-600 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/30" @input="formatCardNumber" /><span v-if="form.errors.card_number" class="mt-1 block text-sm text-rose-300">{{ form.errors.card_number }}</span></label>
@@ -169,6 +171,10 @@ const confirmSubmit = () => {
                         <div class="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
                             <span class="block text-xs text-slate-500">Bandwidth</span>
                             <span class="mt-1 block font-semibold text-slate-200">{{ offer.bandwidth_tb }} TB</span>
+                        </div>
+                        <div v-if="offer.gpu_count > 0" class="rounded-lg border border-purple-500/20 bg-purple-500/5 p-3">
+                            <span class="block text-xs text-purple-300">GPU</span>
+                            <span class="mt-1 block font-semibold text-slate-200">{{ offer.gpu_count }} × {{ offer.gpu_model || 'GPU' }}</span>
                         </div>
                     </div>
                     <dl class="mt-6 space-y-3 border-y border-slate-800 py-5 text-sm">
@@ -204,6 +210,7 @@ const confirmSubmit = () => {
                     <dl class="mt-6 space-y-4 rounded-xl border border-slate-800 bg-slate-950/60 p-4 text-sm">
                         <div class="flex justify-between gap-6"><dt class="text-slate-400">Server offer</dt><dd class="text-right font-semibold text-white">{{ offer.name }}</dd></div>
                         <div class="flex justify-between gap-6"><dt class="text-slate-400">Plan specifications</dt><dd class="text-right font-semibold text-white">{{ offer.cpu_cores }} cores · {{ offer.ram_gb }} GB RAM · {{ offer.storage_amount_gb }} GB {{ offer.storage_type }} · {{ offer.bandwidth_tb }} TB bandwidth</dd></div>
+                        <div v-if="offer.gpu_count > 0" class="flex justify-between gap-6"><dt class="text-slate-400">GPU</dt><dd class="text-right font-semibold text-white">{{ offer.gpu_count }} × {{ offer.gpu_model || 'GPU' }}</dd></div>
                         <div class="flex justify-between gap-6"><dt class="text-slate-400">Billing term</dt><dd class="text-right font-semibold text-white">{{ selectedBilling?.label }}</dd></div>
                         <div class="flex justify-between gap-6"><dt class="text-slate-400">Machine name</dt><dd class="max-w-[60%] break-words text-right font-semibold text-white">{{ form.machine_name }}</dd></div>
                         <div class="flex justify-between gap-6"><dt class="text-slate-400">Operating system</dt><dd class="text-right font-semibold text-white">{{ selectedOperatingSystem ? `${selectedOperatingSystem.name} ${selectedOperatingSystem.version}` : 'Not selected' }}</dd></div>

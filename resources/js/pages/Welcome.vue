@@ -1,11 +1,22 @@
 <script setup lang="ts">
+import {
+    faGamepad,
+    faGlobe,
+    faHardDrive,
+    faMemory,
+    faMicrochip,
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { Head, Link } from '@inertiajs/vue3';
 import {
     Activity,
     ArrowRight,
     Gauge,
     Headphones,
+    Pause,
+    Play,
     ShieldCheck,
+    Upload,
     Zap,
 } from '@lucide/vue';
 import SiteHeader from '@/components/SiteHeader.vue';
@@ -170,7 +181,7 @@ defineProps<Props>();
                         v-for="item in featured_offers"
                         :key="item.id"
                         :class="[
-                            'relative flex flex-col justify-between rounded-2xl p-8 transition',
+                            'home-featured-card relative flex flex-col justify-between rounded-2xl p-8 transition',
                             item.is_highlighted
                                 ? 'border-2 border-indigo-500 bg-slate-900 shadow-2xl ring-1 shadow-indigo-600/20 ring-indigo-500/50'
                                 : 'border border-slate-800/80 bg-slate-900/50 hover:border-slate-700',
@@ -210,21 +221,33 @@ defineProps<Props>();
                             <!-- Hardware Specs -->
                             <ul class="mb-8 space-y-3.5 text-sm text-slate-300">
                                 <li class="flex items-center gap-3">
-                                    <span class="text-indigo-400">⚡</span>
+                                    <FontAwesomeIcon
+                                        :icon="faMicrochip"
+                                        class="h-4 w-4 text-indigo-400"
+                                        aria-hidden="true"
+                                    />
                                     <span
                                         >{{ item.server_offer.cpu_cores }} vCPU
                                         Cores</span
                                     >
                                 </li>
                                 <li class="flex items-center gap-3">
-                                    <span class="text-indigo-400">🧠</span>
+                                    <FontAwesomeIcon
+                                        :icon="faMemory"
+                                        class="h-4 w-4 text-indigo-400"
+                                        aria-hidden="true"
+                                    />
                                     <span
                                         >{{ item.server_offer.ram_gb }} GB DDR
                                         RAM</span
                                     >
                                 </li>
                                 <li class="flex items-center gap-3">
-                                    <span class="text-indigo-400">💾</span>
+                                    <FontAwesomeIcon
+                                        :icon="faHardDrive"
+                                        class="h-4 w-4 text-indigo-400"
+                                        aria-hidden="true"
+                                    />
                                     <span
                                         >{{
                                             item.server_offer.storage_amount_gb
@@ -236,7 +259,11 @@ defineProps<Props>();
                                     >
                                 </li>
                                 <li class="flex items-center gap-3">
-                                    <span class="text-indigo-400">🌐</span>
+                                    <FontAwesomeIcon
+                                        :icon="faGlobe"
+                                        class="h-4 w-4 text-indigo-400"
+                                        aria-hidden="true"
+                                    />
                                     <span
                                         >{{ item.server_offer.bandwidth_tb }} TB
                                         Bandwidth</span
@@ -246,7 +273,11 @@ defineProps<Props>();
                                     v-if="item.server_offer.gpu_model"
                                     class="flex items-center gap-3"
                                 >
-                                    <span class="text-indigo-400">🎮</span>
+                                    <FontAwesomeIcon
+                                        :icon="faGamepad"
+                                        class="h-4 w-4 text-indigo-400"
+                                        aria-hidden="true"
+                                    />
                                     <span>{{
                                         item.server_offer.gpu_model
                                     }}</span>
@@ -275,7 +306,7 @@ defineProps<Props>();
             </section>
 
             <section
-                class="grid gap-6 border-y border-slate-800 py-20 md:grid-cols-3"
+                class="mt-12 grid gap-6 border-y border-slate-800 py-20 md:grid-cols-3"
             >
                 <div class="md:col-span-1">
                     <p
@@ -330,6 +361,89 @@ defineProps<Props>();
                             a real answer, not a maze.
                         </p>
                     </div>
+                </div>
+            </section>
+
+            <section
+                class="my-20 grid gap-10 border-b border-slate-800 pt-6 pb-16 lg:grid-cols-[0.9fr_1.1fr] lg:items-center"
+                aria-labelledby="docker-hosting-heading"
+            >
+                <div>
+                    <p
+                        class="text-xs font-semibold tracking-[0.2em] text-sky-300 uppercase"
+                    >
+                        Docker hosting
+                    </p>
+                    <h2
+                        id="docker-hosting-heading"
+                        class="mt-3 text-3xl font-bold tracking-tight text-white"
+                    >
+                        Host your Docker projects. Run your containers.
+                    </h2>
+                    <p class="mt-4 max-w-xl leading-7 text-slate-400">
+                        Upload your Dockerfiles and host your containerized
+                        applications. Manage your containers from your
+                        dashboard, with control to run or pause them as needed.
+                    </p>
+                    <Link
+                        href="/catalog"
+                        class="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-sky-300 transition hover:text-sky-200"
+                    >
+                        Explore hosting plans
+                        <ArrowRight class="h-4 w-4" />
+                    </Link>
+                </div>
+
+                <div
+                    class="flex flex-col items-center gap-8 lg:border-l lg:border-slate-800 lg:pl-8"
+                >
+                    <img
+                        src="/images/docker-logo.png"
+                        alt="Docker whale logo"
+                        class="w-36 max-w-full drop-shadow-[0_12px_24px_rgba(36,150,237,0.18)] sm:w-40"
+                        width="601"
+                        height="431"
+                    />
+
+                    <ul class="grid w-full gap-6 sm:grid-cols-3">
+                        <li class="border-t border-slate-800 pt-4">
+                            <Upload
+                                class="h-5 w-5 text-sky-300"
+                                aria-hidden="true"
+                            />
+                            <h3 class="mt-4 font-semibold text-white">
+                                Upload Dockerfiles
+                            </h3>
+                            <p class="mt-2 text-sm leading-6 text-slate-400">
+                                Store the files you need to define your
+                                container setup.
+                            </p>
+                        </li>
+                        <li class="border-t border-slate-800 pt-4">
+                            <Play
+                                class="h-5 w-5 text-emerald-300"
+                                aria-hidden="true"
+                            />
+                            <h3 class="mt-4 font-semibold text-white">
+                                Run containers
+                            </h3>
+                            <p class="mt-2 text-sm leading-6 text-slate-400">
+                                Host and run your containerized applications.
+                            </p>
+                        </li>
+                        <li class="border-t border-slate-800 pt-4">
+                            <Pause
+                                class="h-5 w-5 text-amber-300"
+                                aria-hidden="true"
+                            />
+                            <h3 class="mt-4 font-semibold text-white">
+                                Pause when needed
+                            </h3>
+                            <p class="mt-2 text-sm leading-6 text-slate-400">
+                                Pause and resume containers from your dashboard.
+                            </p>
+                        </li>
+                    </ul>
                 </div>
             </section>
 
@@ -425,3 +539,49 @@ defineProps<Props>();
         </main>
     </div>
 </template>
+
+<style scoped>
+.home-featured-card {
+    transition:
+        border-color 180ms ease,
+        background-color 180ms ease,
+        box-shadow 180ms ease,
+        transform 180ms ease;
+}
+
+.home-featured-card:hover,
+.home-featured-card:focus-within {
+    transform: translateY(-4px);
+}
+
+:global(html.dark .home-featured-card:hover),
+:global(html.dark .home-featured-card:focus-within) {
+    border-color: #818cf8;
+    background-color: #18243b;
+    box-shadow:
+        0 20px 40px rgb(0 0 0 / 0.3),
+        0 0 0 1px rgb(129 140 248 / 0.2),
+        0 0 30px rgb(99 102 241 / 0.13);
+}
+
+:global(html:not(.dark) .home-featured-card:hover),
+:global(html:not(.dark) .home-featured-card:focus-within) {
+    border-color: #818cf8;
+    background-color: #fff;
+    box-shadow:
+        0 20px 40px rgb(49 46 129 / 0.14),
+        0 0 0 1px rgb(129 140 248 / 0.18),
+        0 0 28px rgb(99 102 241 / 0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .home-featured-card {
+        transition: none;
+    }
+
+    .home-featured-card:hover,
+    .home-featured-card:focus-within {
+        transform: none;
+    }
+}
+</style>

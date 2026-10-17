@@ -50,28 +50,28 @@ const updatePassword = () => {
 <template>
     <Head title="Profile settings - VelocityRig" />
 
-    <div class="min-h-screen bg-slate-950 text-slate-100">
+    <div class="profile-page min-h-screen bg-slate-950 text-slate-100">
         <SiteHeader />
 
         <main class="mx-auto max-w-5xl space-y-8 px-4 py-10 sm:px-6 lg:px-8">
-            <div>
+            <div class="profile-intro">
                 <p
-                    class="text-xs font-semibold tracking-[0.2em] text-indigo-400 uppercase"
+                    class="profile-kicker text-xs font-semibold tracking-[0.2em] text-indigo-400 uppercase"
                 >
                     Your account
                 </p>
-                <h1 class="mt-2 text-3xl font-bold text-white">
+                <h1 class="profile-title mt-3 text-3xl font-bold text-white">
                     Profile settings
                 </h1>
-                <p class="mt-1 text-slate-400">
+                <p class="profile-subtitle mt-2 text-slate-400">
                     Manage your contact details and account password.
                 </p>
             </div>
 
             <section
-                class="rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-xl shadow-black/10"
+                class="profile-section rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-xl shadow-black/10"
             >
-                <div class="mb-6">
+                <div class="profile-section-heading mb-6">
                     <h2 class="text-lg font-semibold text-white">
                         Personal information
                     </h2>
@@ -113,9 +113,9 @@ const updatePassword = () => {
             </section>
 
             <section
-                class="rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-xl shadow-black/10"
+                class="profile-section rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-xl shadow-black/10"
             >
-                <div class="mb-6">
+                <div class="profile-section-heading mb-6">
                     <h2 class="text-lg font-semibold text-white">
                         Change password
                     </h2>
@@ -334,5 +334,57 @@ const updatePassword = () => {
 }
 .profile-error {
     @apply mt-1 text-xs text-rose-400;
+}
+
+:global(html:not(.dark)) .profile-label {
+    color: #334155;
+}
+
+:global(html:not(.dark)) .profile-detail {
+    border-color: #cbd5e1;
+    background-color: #fff;
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+}
+
+:global(html:not(.dark)) .profile-detail dd {
+    color: #0f172a;
+}
+
+:global(html:not(.dark)) .profile-input {
+    border-color: #94a3b8;
+    background-color: #fff;
+    color: #0f172a;
+}
+
+:global(html:not(.dark)) .profile-input::placeholder {
+    color: #64748b;
+}
+
+:global(html:not(.dark)) .profile-input:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 1px #4f46e5;
+}
+
+:global(html:not(.dark)) .profile-secondary {
+    border-color: #94a3b8;
+    color: #334155;
+}
+
+:global(html:not(.dark)) .profile-secondary:hover {
+    border-color: #64748b;
+    background-color: #e2e8f0;
+    color: #0f172a;
+}
+
+:global(html:not(.dark)) .profile-close {
+    color: #475569;
+}
+
+:global(html:not(.dark)) .profile-close:hover {
+    color: #0f172a;
+}
+
+:global(html:not(.dark)) .profile-error {
+    color: #be123c;
 }
 </style>

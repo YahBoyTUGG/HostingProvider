@@ -125,7 +125,9 @@ class AdminDashboardController extends Controller
 
     public function demote_user(Request $request, User $user)
     {
-        abort_if($request->user()->is($user), 422, 'You cannot demote your own account.');
+        if ($request->user()->is($user)) {
+            return back()->with('error', 'You cannot demote your own account.');
+        }
 
         $user->update(['role' => 'user']);
 

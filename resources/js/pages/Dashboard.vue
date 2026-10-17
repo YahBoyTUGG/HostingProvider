@@ -2,6 +2,8 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref, type PropType } from 'vue';
 import SiteHeader from '@/components/SiteHeader.vue';
+import { Toaster } from '@/components/ui/sonner';
+import { containerAccessUrl } from '@/lib/containerAccessUrl';
 
 interface DockerContainer {
     id: number;
@@ -39,7 +41,6 @@ const props = defineProps({
         type: Array as PropType<Dockerfile[]>,
         default: () => [],
     },
-    flash: Object,
 });
 
 const processingPowerId = ref(null);
@@ -215,9 +216,24 @@ const confirmCancelSubscription = () => {
 
     <div class="min-h-screen bg-slate-900 font-sans text-slate-100">
         <SiteHeader />
-        <span>{{ $page.props.flash?.success }}</span>
+        <Toaster />
 
         <main class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+            <header class="mb-8">
+                <p
+                    class="text-xs font-semibold tracking-[0.2em] text-indigo-400 uppercase"
+                >
+                    Account overview
+                </p>
+                <h1 class="mt-2 text-3xl font-bold tracking-tight text-white">
+                    Your dashboard
+                </h1>
+                <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
+                    Manage your servers and keep track of
+                    your subscriptions and Docker containers.
+                </p>
+            </header>
+
             <!-- Dashboard Overview Stats -->
             <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
                 <div
@@ -354,13 +370,26 @@ const confirmCancelSubscription = () => {
                             <div class="flex items-center gap-3">
                                 <button
                                     @click="togglePower(sub.id)"
-                                    :disabled="processingPowerId === sub.id"
-                                    class="flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-semibold shadow-sm transition-all"
+                                    :disabled="
+                                        processingPowerId === sub.id ||
+                                        sub.virtual_machine?.status ===
+                                        'provisioning'
+                                    "
+                                    :title="
+                                        sub.virtual_machine?.status ===
+                                        'provisioning'
+                                        ? 'Power controls are unavailable while the server is provisioning.'
+                                        : undefined
+                                    "
+                                    class="flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-semibold shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-50"
                                     :class="
                                         sub.virtual_machine?.status ===
-                                        'running'
-                                            ? 'border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20'
-                                            : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
+                                        'provisioning'
+                                        ? 'border-slate-600 bg-slate-700/50 text-slate-400'
+                                        : sub.virtual_machine?.status ===
+                                            'running'
+                                          ? 'border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20'
+                                          : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
                                     "
                                 >
                                     <span
@@ -370,9 +399,12 @@ const confirmCancelSubscription = () => {
                                     >
                                     <span>{{
                                         sub.virtual_machine?.status ===
-                                        'running'
-                                            ? 'Stop Instance'
-                                            : 'Start Instance'
+                                        'provisioning'
+                                            ? 'Provisioning...'
+                                            : sub.virtual_machine?.status ===
+                                                'running'
+                                              ? 'Stop Instance'
+                                              : 'Start Instance'
                                     }}</span>
                                 </button>
 
@@ -565,6 +597,15 @@ const confirmCancelSubscription = () => {
                                 </button>
                             </div>
                             <div class="flex flex-wrap items-center gap-3">
+                                <a
+                                    v-if="dockerfile.user_containers?.[0]?.status === 'running'"
+                                    :href="containerAccessUrl(dockerfile.user_containers[0].host_port)"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="text-sm font-semibold text-emerald-400 hover:text-emerald-300"
+                                >
+                                    View
+                                </a>
                                 <span v-if="dockerfile.user_containers?.[0]" class="text-xs text-slate-500">
                                     {{ dockerfile.user_containers[0].container_port }} → :{{ dockerfile.user_containers[0].host_port }}
                                 </span>
@@ -594,9 +635,14 @@ const confirmCancelSubscription = () => {
                 </h2>
 
                 <div
-                    class="overflow-hidden rounded-2xl border border-slate-700/60 bg-slate-800/60 shadow-xl"
+                    class="max-w-full overflow-x-auto rounded-2xl border border-slate-700/60 bg-slate-800/60 shadow-xl"
+                    role="region"
+                    aria-label="Subscription history"
+                    tabindex="0"
                 >
-                    <table class="w-full text-left text-sm text-slate-300">
+                    <table
+                        class="min-w-[36rem] w-full text-left text-sm text-slate-300"
+                    >
                         <thead
                             class="border-b border-slate-700 bg-slate-900/80 text-xs font-semibold text-slate-400 uppercase"
                         >

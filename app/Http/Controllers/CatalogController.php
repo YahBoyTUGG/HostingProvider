@@ -27,7 +27,9 @@ class CatalogController extends Controller
                     'storage_type' => $offer->storage_type,
                     'storage_gb' => (int) $offer->storage_amount_gb,
                     'bandwidth_tb' => (float) ($offer->bandwidth_tb ?? 1),
-                    'has_gpu' => (int) ($offer->gpu_count ?? 0),
+                    'has_gpu' => (int) ($offer->gpu_count ?? 0) > 0,
+                    'gpu_model' => $offer->gpu_model,
+                    'gpu_count' => (int) ($offer->gpu_count ?? 0),
                     'durations' => $offer->durations ?? ['monthly', 'quarterly', 'yearly'],
                 ];
             });

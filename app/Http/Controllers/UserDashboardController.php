@@ -82,9 +82,14 @@ class UserDashboardController extends Controller
             ]);
         }
 
-        return back()->with('success', $dockerfile->build_status === 'ready'
-            ? 'Docker image built and container started.'
-            : 'Docker image build failed. See the build log for details.');
+        Inertia::flash('toast', [
+            'type' => $dockerfile->build_status === 'ready' ? 'success' : 'error',
+            'message' => $dockerfile->build_status === 'ready'
+                ? 'Docker image built and container started.'
+                : 'Docker image build failed. See the build log for details.',
+        ]);
+
+        return back();
     }
 
     public function downloadDockerfile(Dockerfile $dockerfile): StreamedResponse
@@ -103,7 +108,12 @@ class UserDashboardController extends Controller
 
         $service->remove($dockerfile->load('userContainers'));
 
-        return back()->with('success', 'Docker container and source archive removed.');
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Docker container and source archive removed.',
+        ]);
+
+        return back();
     }
 
     public function pauseDockerContainer(UserContainer $userContainer, DockerContainerService $service): RedirectResponse
@@ -118,7 +128,12 @@ class UserDashboardController extends Controller
             return back()->withErrors(['docker' => $exception->getMessage()]);
         }
 
-        return back()->with('success', 'Docker container paused.');
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Docker container paused.',
+        ]);
+
+        return back();
     }
 
     public function unpauseDockerContainer(UserContainer $userContainer, DockerContainerService $service): RedirectResponse
@@ -133,7 +148,12 @@ class UserDashboardController extends Controller
             return back()->withErrors(['docker' => $exception->getMessage()]);
         }
 
-        return back()->with('success', 'Docker container resumed.');
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Docker container resumed.',
+        ]);
+
+        return back();
     }
 
     public function toggle_power(Subscription $subscription)
@@ -141,8 +161,21 @@ class UserDashboardController extends Controller
         $this->authorize_owner($subscription);
 
         $vm = $subscription->virtualMachine;
+        if ($vm->status === 'provisioning') {
+            return back()->withErrors([
+                'power' => 'Power controls are unavailable while the server is provisioning.',
+            ]);
+        }
+
         $vm->update([
             'status' => $vm->status === 'running' ? 'stopped' : 'running',
+        ]);
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => $vm->status === 'running'
+                ? 'Server instance started.'
+                : 'Server instance stopped.',
         ]);
 
         return back();
@@ -154,7 +187,12 @@ class UserDashboardController extends Controller
 
         $service->cancel_subscription($subscription);
 
-        return back()->with('success', 'Subscription cancelled.');
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Plan cancelled.',
+        ]);
+
+        return back();
     }
 
     private function authorize_owner(Subscription $subscription): void

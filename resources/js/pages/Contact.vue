@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import SiteHeader from '@/components/SiteHeader.vue';
 
 defineOptions({
@@ -13,9 +14,15 @@ const form = useForm({
     message: '',
 });
 
+const messageSent = ref(false);
+
 const submitContact = () => {
+    messageSent.value = false;
     form.post('contact', {
-        onSuccess: () => form.reset(),
+        onSuccess: () => {
+            form.reset();
+            messageSent.value = true;
+        },
     });
 };
 </script>
@@ -35,6 +42,15 @@ const submitContact = () => {
                     Have pre-sales questions or general inquiries? Send us a
                     message below.
                 </p>
+            </div>
+
+            <div
+                v-if="messageSent"
+                class="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-4 text-sm text-emerald-200"
+                role="status"
+                aria-live="polite"
+            >
+                Your message was sent successfully. We’ll get back to you soon.
             </div>
 
             <!-- Public Contact Form -->
@@ -80,7 +96,7 @@ const submitContact = () => {
                         v-model="form.subject"
                         type="text"
                         required
-                        placeholder="Inquiry regarding bare-metal servers..."
+                        placeholder="Inquiry regarding servers..."
                         class="w-full rounded-xl border border-slate-700 bg-slate-900/80 px-3.5 py-2.5 text-sm text-slate-200 focus:border-indigo-500 focus:outline-none"
                     />
                 </div>

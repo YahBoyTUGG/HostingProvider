@@ -17,6 +17,8 @@ interface ServerOffer {
     storage_gb: number;
     bandwidth_tb: number;
     has_gpu: boolean;
+    gpu_model: string | null;
+    gpu_count: number;
     durations: string[]; // e.g. ['monthly', 'quarterly', 'yearly']
 }
 
@@ -330,7 +332,7 @@ const resetFilters = () => {
                         <div
                             v-for="offer in filteredOffers"
                             :key="offer.id"
-                            class="flex flex-col justify-between space-y-6 rounded-2xl border border-slate-700 bg-slate-800/80 p-6 shadow-xl transition-all hover:border-slate-600"
+                            class="catalog-offer-card flex flex-col justify-between space-y-6 rounded-2xl border border-slate-700 bg-slate-800/80 p-6 shadow-xl"
                         >
                             <div class="space-y-4">
                                 <!-- Card Header -->
@@ -376,7 +378,7 @@ const resetFilters = () => {
                                     class="grid grid-cols-2 gap-3 pt-2 text-xs"
                                 >
                                     <div
-                                        class="rounded-xl border border-slate-800 bg-slate-900/60 p-2.5"
+                                        class="catalog-spec-card rounded-xl border border-slate-800 bg-slate-900/60 p-2.5"
                                     >
                                         <span class="block text-slate-500"
                                             >CPU Cores</span
@@ -387,7 +389,7 @@ const resetFilters = () => {
                                         >
                                     </div>
                                     <div
-                                        class="rounded-xl border border-slate-800 bg-slate-900/60 p-2.5"
+                                        class="catalog-spec-card rounded-xl border border-slate-800 bg-slate-900/60 p-2.5"
                                     >
                                         <span class="block text-slate-500"
                                             >System RAM</span
@@ -398,7 +400,7 @@ const resetFilters = () => {
                                         >
                                     </div>
                                     <div
-                                        class="rounded-xl border border-slate-800 bg-slate-900/60 p-2.5"
+                                        class="catalog-spec-card rounded-xl border border-slate-800 bg-slate-900/60 p-2.5"
                                     >
                                         <span class="block text-slate-500"
                                             >Storage</span
@@ -410,7 +412,7 @@ const resetFilters = () => {
                                         >
                                     </div>
                                     <div
-                                        class="rounded-xl border border-slate-800 bg-slate-900/60 p-2.5"
+                                        class="catalog-spec-card rounded-xl border border-slate-800 bg-slate-900/60 p-2.5"
                                     >
                                         <span class="block text-slate-500"
                                             >Bandwidth</span
@@ -420,22 +422,18 @@ const resetFilters = () => {
                                             >{{ offer.bandwidth_tb }} TB</span
                                         >
                                     </div>
-                                </div>
-
-                                <!-- Durations -->
-                                <div class="pt-1">
-                                    <span
-                                        class="mb-1 block text-xs text-slate-500"
-                                        >Supported Billing Cycles:</span
+                                    <div
+                                        v-if="offer.has_gpu"
+                                        class="catalog-spec-card rounded-xl border border-purple-500/20 bg-purple-500/5 p-2.5"
                                     >
-                                    <div class="flex flex-wrap gap-1">
-                                        <span
-                                            v-for="duration in offer.durations"
-                                            :key="duration"
-                                            class="rounded border border-slate-600/40 bg-slate-700/50 px-2 py-0.5 font-mono text-[10px] text-slate-300 uppercase"
+                                        <span class="block text-purple-300"
+                                            >GPU</span
                                         >
-                                            {{ duration }}
-                                        </span>
+                                        <span
+                                            class="font-semibold text-slate-200"
+                                            >{{ offer.gpu_count }} ×
+                                            {{ offer.gpu_model || 'GPU' }}</span
+                                        >
                                     </div>
                                 </div>
                             </div>

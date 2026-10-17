@@ -61,3 +61,14 @@ it('allows admins to update subscription and virtual machine statuses', function
     expect($subscription->refresh()->status)->toBe('cancelled')
         ->and($virtualMachine->refresh()->status)->toBe('stopped');
 });
+
+it('prevents an admin from demoting their own account with a message', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+
+    $this->actingAs($admin)
+        ->post(route('admin.users.demote', $admin))
+        ->assertRedirect()
+        ->assertSessionHas('error', 'You cannot demote your own account.');
+
+    expect($admin->refresh()->role)->toBe('admin');
+});

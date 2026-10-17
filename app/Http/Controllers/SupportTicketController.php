@@ -55,8 +55,14 @@ class SupportTicketController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'affected_service' => [
+                'required',
+                'in:General account inquiry,Docker containers,Dockerfile upload,Server performance,Networking,Billing and payments,Account access,Other,Plan',
+            ],
             'subscription_id' => [
                 'nullable',
+                'required_if:affected_service,Plan',
+                'prohibited_unless:affected_service,Plan',
                 Rule::exists('subscriptions', 'id')->where('user_id', $request->user()->id),
             ],
             'priority' => 'required|in:low,normal,high',
@@ -66,6 +72,7 @@ class SupportTicketController extends Controller
 
         $ticket = $request->user()->tickets()->create([
             'subscription_id' => $validated['subscription_id'] ?? null,
+            'affected_service' => $validated['affected_service'],
             'subject' => $validated['subject'],
             'priority' => $validated['priority'],
         ]);

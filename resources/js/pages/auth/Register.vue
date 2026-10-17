@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import SiteHeader from '@/components/SiteHeader.vue';
 
 const form = useForm({
     first_name: '',
@@ -21,7 +22,9 @@ const submit = () => {
 <template>
     <Head title="Sign Up - VelocityRig" />
 
-    <div class="min-h-screen bg-slate-900 text-slate-100 flex flex-col justify-center items-center p-4 py-12">
+    <div class="flex min-h-screen flex-col bg-slate-900 text-slate-100">
+        <SiteHeader />
+        <main class="flex flex-1 items-center justify-center p-4 py-12">
         <div class="w-full max-w-lg space-y-8 bg-slate-800/80 border border-slate-700/80 p-8 rounded-2xl shadow-2xl backdrop-blur">
             <!-- Header -->
             <div class="text-center space-y-2">
@@ -140,5 +143,6 @@ const submit = () => {
                 </Link>
             </p>
         </div>
+        </main>
     </div>
 </template>

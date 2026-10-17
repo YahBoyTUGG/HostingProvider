@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Head, router, useForm } from '@inertiajs/vue3';
+import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
 import SiteHeader from '@/components/SiteHeader.vue';
+import { containerAccessUrl } from '@/lib/containerAccessUrl';
 
 type Tab =
     | 'users'
@@ -19,6 +20,8 @@ interface User {
     first_name: string;
     last_name: string;
     email: string;
+    living_address: string | null;
+    phone_number: string | null;
     role: 'user' | 'admin';
 }
 
@@ -72,6 +75,7 @@ interface Message {
 interface Ticket {
     id: number;
     subject: string;
+    affected_service?: string | null;
     priority: 'low' | 'normal' | 'high';
     status: string;
     created_at: string;
@@ -145,8 +149,18 @@ const props = defineProps<{
     dockerfiles: Dockerfile[];
 }>();
 
+const page = usePage();
 const activeTab = ref<Tab>('users');
 const activeView = ref<ViewMode>('list');
+const selectedUser = ref<User | null>(null);
+const isSelfDemotionModalOpen = ref(false);
+const userPendingDelete = ref<User | null>(null);
+const userPendingRoleChange = ref<{
+    user: User;
+    action: 'promote' | 'demote';
+} | null>(null);
+const expandedTicketIds = ref<Set<number>>(new Set());
+const ticketPendingClose = ref<Ticket | null>(null);
 const search = reactive<Record<Tab, string>>({
     users: '',
     offers: '',
@@ -283,9 +297,7 @@ const filteredTickets = computed(() =>
     props.tickets.filter((ticket) => {
         const query = search.tickets.toLowerCase();
         const createdDate = ticket.created_at.slice(0, 10);
-        const serviceName =
-            ticket.subscription?.server_offer?.name ??
-            'General account inquiry';
+        const serviceName = getTicketServiceName(ticket);
 
         return (
             (ticketStatusFilter.value === 'all' ||
@@ -361,14 +373,34 @@ const filteredDockerfiles = computed(() =>
 const ticketServices = computed(() =>
     [
         ...new Set(
-            props.tickets.map(
-                (ticket) =>
-                    ticket.subscription?.server_offer?.name ??
-                    'General account inquiry',
-            ),
+            props.tickets.map((ticket) => getTicketServiceName(ticket)),
         ),
     ].sort(),
 );
+
+const getTicketServiceName = (ticket: Ticket) =>
+    ticket.subscription?.server_offer?.name ??
+    ticket.affected_service ??
+    'General account inquiry';
+
+const toggleTicketDetails = (ticketId: number) => {
+    const expandedIds = new Set(expandedTicketIds.value);
+
+    if (expandedIds.has(ticketId)) {
+        expandedIds.delete(ticketId);
+    } else {
+        expandedIds.add(ticketId);
+    }
+
+    expandedTicketIds.value = expandedIds;
+};
+
+const ticketStatusClass = (status: string) => {
+    if (status === 'closed') return 'bg-slate-800 text-slate-300';
+    if (status === 'answered') return 'bg-emerald-400/10 text-emerald-300';
+
+    return 'bg-amber-400/10 text-amber-300';
+};
 
 const setTab = (tab: Tab) => {
     activeTab.value = tab;
@@ -426,11 +458,42 @@ const submitUser = () => {
     });
 };
 
-const promote = (user: User) => router.post(`/admin/users/${user.id}/promote`);
-const demote = (user: User) => router.post(`/admin/users/${user.id}/demote`);
+const promote = (user: User) => {
+    userPendingRoleChange.value = { user, action: 'promote' };
+};
+
+const demote = (user: User) => {
+    if (page.props.auth.user.id === user.id) {
+        isSelfDemotionModalOpen.value = true;
+        return;
+    }
+
+    userPendingRoleChange.value = { user, action: 'demote' };
+};
+
+const confirmUserRoleChange = () => {
+    if (!userPendingRoleChange.value) return;
+
+    const { user, action } = userPendingRoleChange.value;
+    router.post(`/admin/users/${user.id}/${action}`, {}, {
+        onSuccess: () => {
+            userPendingRoleChange.value = null;
+        },
+    });
+};
 const deleteUser = (user: User) => {
-    if (window.confirm(`Delete ${user.first_name} ${user.last_name}?`))
-        router.delete(`/admin/users/${user.id}`);
+    userPendingDelete.value = user;
+};
+
+const confirmDeleteUser = () => {
+    if (!userPendingDelete.value) return;
+
+    const user = userPendingDelete.value;
+    router.delete(`/admin/users/${user.id}`, {
+        onSuccess: () => {
+            userPendingDelete.value = null;
+        },
+    });
 };
 
 const submitOffer = () => {
@@ -538,8 +601,21 @@ const sendReply = (ticket: Ticket) => {
 };
 
 const closeTicket = (ticket: Ticket) => {
-    if (window.confirm(`Close ticket #${ticket.id}?`))
-        router.post(`/admin/tickets/${ticket.id}/close`);
+    ticketPendingClose.value = ticket;
+};
+
+const confirmCloseTicket = () => {
+    if (!ticketPendingClose.value) return;
+
+    const ticket = ticketPendingClose.value;
+    router.post(`/admin/tickets/${ticket.id}/close`, {}, {
+        onSuccess: () => {
+            ticketPendingClose.value = null;
+            const expandedIds = new Set(expandedTicketIds.value);
+            expandedIds.delete(ticket.id);
+            expandedTicketIds.value = expandedIds;
+        },
+    });
 };
 
 const updateSubscriptionStatus = (subscription: Subscription) =>
@@ -612,7 +688,7 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
         <main class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
             <div class="mb-8">
                 <h1 class="text-3xl font-bold text-white">
-                    Operations dashboard
+                    Admin dashboard
                 </h1>
                 <p class="mt-1 text-slate-400">
                     Manage people, infrastructure, customer messages, and
@@ -699,9 +775,15 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
                     <article
                         v-for="user in filteredUsers"
                         :key="user.id"
-                        class="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-800 bg-slate-900 p-5"
+                        class="admin-card relative flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-800 bg-slate-900 p-5"
                     >
-                        <div>
+                        <button
+                            type="button"
+                            class="absolute inset-0 z-0 rounded-xl focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none"
+                            :aria-label="`View details for ${user.first_name} ${user.last_name}`"
+                            @click="selectedUser = user"
+                        ></button>
+                        <div class="pointer-events-none relative z-10 min-w-0">
                             <p class="font-semibold text-white">
                                 {{ user.first_name }} {{ user.last_name }}
                             </p>
@@ -709,14 +791,15 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
                                 {{ user.email }}
                             </p>
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div class="relative z-10 flex items-center gap-2">
                             <span
-                                class="rounded-full px-2.5 py-1 text-xs font-semibold"
+                                class="relative z-10 cursor-pointer rounded-full px-2.5 py-1 text-xs font-semibold"
                                 :class="
                                     user.role === 'admin'
                                         ? 'bg-indigo-400/10 text-indigo-300'
                                         : 'bg-slate-800 text-slate-400'
                                 "
+                                @click="selectedUser = user"
                                 >{{ user.role }}</span
                             ><button
                                 v-if="user.role === 'user'"
@@ -840,7 +923,7 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
                     <div class="flex flex-wrap gap-3">
                         <input
                             v-model="search.offers"
-                            placeholder="Search offers, cities..."
+                            placeholder="Search offers..."
                             class="admin-input min-w-64 flex-1"
                         /><select
                             v-model="offerTypeFilter"
@@ -858,7 +941,7 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
                         <article
                             v-for="offer in filteredOffers"
                             :key="offer.id"
-                            class="rounded-xl border border-slate-800 bg-slate-900 p-5"
+                            class="admin-card rounded-xl border border-slate-800 bg-slate-900 p-5"
                         >
                             <div class="flex justify-between gap-3">
                                 <div>
@@ -1204,7 +1287,7 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
                                 v-for="offer in availableFeaturedOffers"
                                 :key="offer.id"
                                 type="button"
-                                class="flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition"
+                                class="admin-option-card flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition"
                                 :class="
                                     newFeatureForm.server_offer_id === offer.id
                                         ? 'border-indigo-400 bg-indigo-500/15 text-white'
@@ -1399,7 +1482,7 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
                     <article
                         v-for="feature in filteredFeaturedOffers"
                         :key="feature.id"
-                        class="rounded-xl border border-slate-800 bg-slate-900 p-5"
+                        class="admin-card rounded-xl border border-slate-800 bg-slate-900 p-5"
                     >
                         <div
                             class="flex flex-wrap items-start justify-between gap-4"
@@ -1506,7 +1589,7 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
         <article
             v-for="subscription in filteredSubscriptions"
             :key="subscription.id"
-            class="rounded-xl border border-slate-800 bg-slate-900 p-5"
+            class="admin-card rounded-xl border border-slate-800 bg-slate-900 p-5"
         >
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div>
@@ -1613,7 +1696,7 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
         <article
             v-for="virtualMachine in filteredVirtualMachines"
             :key="virtualMachine.id"
-            class="rounded-xl border border-slate-800 bg-slate-900 p-5"
+            class="admin-card rounded-xl border border-slate-800 bg-slate-900 p-5"
         >
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div>
@@ -1695,7 +1778,7 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
                     <article
                         v-for="dockerfile in filteredDockerfiles"
                         :key="dockerfile.id"
-                        class="rounded-xl border border-slate-800 bg-slate-900 p-5"
+                        class="admin-card rounded-xl border border-slate-800 bg-slate-900 p-5"
                     >
                         <div class="flex flex-wrap items-start justify-between gap-4">
                             <div class="min-w-0">
@@ -1737,6 +1820,15 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
                         </div>
 
                         <div class="mt-4 flex flex-wrap items-center gap-2">
+                            <a
+                                v-if="dockerfile.user_containers[0]?.status === 'running'"
+                                :href="containerAccessUrl(dockerfile.user_containers[0].host_port)"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="admin-secondary text-emerald-300 hover:text-emerald-200"
+                            >
+                                View
+                            </a>
                             <button
                                 v-if="dockerfile.user_containers[0] && (dockerfile.user_containers[0].status === 'running' || dockerfile.user_containers[0].is_paused)"
                                 type="button"
@@ -1789,7 +1881,7 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
                 <article
                     v-for="contact in filteredContacts"
                     :key="contact.id"
-                    class="rounded-xl border bg-slate-900 p-5"
+                    class="admin-card rounded-xl border bg-slate-900 p-5"
                     :class="
                         contact.is_read
                             ? 'border-slate-800'
@@ -1923,93 +2015,405 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
                 <article
                     v-for="ticket in filteredTickets"
                     :key="ticket.id"
-                    class="rounded-xl border border-slate-800 bg-slate-900 p-5"
+                    class="admin-card rounded-xl border border-slate-800 bg-slate-900"
                 >
-                    <div class="flex flex-wrap justify-between gap-3">
-                        <div>
+                    <button
+                        type="button"
+                        class="flex w-full flex-wrap items-center justify-between gap-3 rounded-xl p-5 text-left transition-colors hover:bg-slate-800/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+                        :aria-expanded="expandedTicketIds.has(ticket.id)"
+                        :aria-controls="`ticket-details-${ticket.id}`"
+                        @click="toggleTicketDetails(ticket.id)"
+                    >
+                        <div class="min-w-0">
                             <p class="text-xs text-slate-500">
-                                Ticket #{{ ticket.id }} ·
                                 {{ ticket.user?.email }}
                             </p>
                             <h2 class="mt-1 font-semibold text-white">
                                 {{ ticket.subject }}
                             </h2>
-                            <p class="mt-1 text-xs text-slate-500">
-                                {{
-                                    ticket.subscription?.server_offer?.name ??
-                                    'General account inquiry'
-                                }}
-                                · {{ ticket.priority }} priority ·
-                                {{
-                                    new Date(
-                                        ticket.created_at,
-                                    ).toLocaleDateString()
-                                }}
-                            </p>
                         </div>
-                        <span class="text-xs text-indigo-300 capitalize">{{
-                            ticket.status
-                        }}</span>
-                    </div>
-                    <div class="mt-4 space-y-3">
-                        <div
-                            v-for="message in ticket.messages"
-                            :key="message.id"
-                            class="border-l-2 border-slate-700 pl-3"
-                        >
-                            <p class="text-xs text-slate-500">
-                                {{
-                                    message.user?.role === 'admin'
-                                        ? 'Support team'
-                                        : 'Customer'
-                                }}
-                                ·
-                                {{
-                                    new Date(
-                                        message.created_at,
-                                    ).toLocaleString()
-                                }}
-                            </p>
-                            <p
-                                class="mt-1 text-sm whitespace-pre-wrap text-slate-300"
+                        <div class="flex shrink-0 items-center gap-3">
+                            <span
+                                class="rounded-full px-2.5 py-1 text-xs font-medium capitalize"
+                                :class="ticketStatusClass(ticket.status)"
                             >
-                                {{ message.message }}
-                            </p>
+                                {{ ticket.status }}
+                            </span>
+                            <span class="text-xs text-indigo-300">
+                                {{
+                                    expandedTicketIds.has(ticket.id)
+                                        ? 'Hide details'
+                                        : 'View details'
+                                }}
+                            </span>
+                            <span
+                                class="text-xs text-slate-400 transition-transform duration-300"
+                                :class="
+                                    expandedTicketIds.has(ticket.id)
+                                        ? 'rotate-180'
+                                        : ''
+                                "
+                                aria-hidden="true"
+                                >⌄</span
+                            >
                         </div>
-                    </div>
+                    </button>
                     <div
-                        v-if="ticket.status !== 'closed'"
-                        class="mt-5 flex flex-wrap items-end gap-3"
+                        :id="`ticket-details-${ticket.id}`"
+                        class="grid transition-[grid-template-rows] duration-300 ease-in-out motion-reduce:transition-none"
+                        :class="
+                            expandedTicketIds.has(ticket.id)
+                                ? 'grid-rows-[1fr]'
+                                : 'grid-rows-[0fr]'
+                        "
+                        :aria-hidden="!expandedTicketIds.has(ticket.id)"
+                        :inert="!expandedTicketIds.has(ticket.id)"
                     >
-                        <form
-                            class="flex min-w-0 flex-1 gap-3"
-                            @submit.prevent="sendReply(ticket)"
-                        >
-                            <textarea
-                                v-model="responseForms[ticket.id]"
-                                required
-                                maxlength="2000"
-                                rows="2"
-                                placeholder="Write a response..."
-                                class="admin-input flex-1"
-                            ></textarea
-                            ><button class="admin-button self-end">
-                                Reply
-                            </button>
-                        </form>
-                        <button
-                            type="button"
-                            class="admin-secondary text-rose-300 hover:border-rose-400 hover:text-rose-200"
-                            @click="closeTicket(ticket)"
-                        >
-                            Close ticket
-                        </button>
+                        <div class="min-h-0 overflow-hidden">
+                            <div class="border-t border-slate-800 p-5">
+                                <div class="flex flex-wrap justify-between gap-3">
+                                    <p class="text-xs text-slate-500">
+                                        Ticket #{{ ticket.id }} ·
+                                        {{ getTicketServiceName(ticket) }}
+                                        · {{ ticket.priority }} priority ·
+                                        {{
+                                            new Date(
+                                                ticket.created_at,
+                                            ).toLocaleDateString()
+                                        }}
+                                    </p>
+                                </div>
+                                <div class="mt-4 space-y-3">
+                                    <div
+                                        v-for="message in ticket.messages"
+                                        :key="message.id"
+                                        class="border-l-2 border-slate-700 pl-3"
+                                    >
+                                        <p class="text-xs text-slate-500">
+                                            {{
+                                                message.user?.role === 'admin'
+                                                    ? 'Support team'
+                                                    : 'Customer'
+                                            }}
+                                            ·
+                                            {{
+                                                new Date(
+                                                    message.created_at,
+                                                ).toLocaleString()
+                                            }}
+                                        </p>
+                                        <p
+                                            class="mt-1 text-sm whitespace-pre-wrap text-slate-300"
+                                        >
+                                            {{ message.message }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div
+                                    v-if="ticket.status !== 'closed'"
+                                    class="mt-5 flex flex-wrap items-end gap-3"
+                                >
+                                    <form
+                                        class="flex min-w-0 flex-1 gap-3"
+                                        @submit.prevent="sendReply(ticket)"
+                                    >
+                                        <textarea
+                                            v-model="responseForms[ticket.id]"
+                                            required
+                                            maxlength="2000"
+                                            rows="2"
+                                            placeholder="Write a response..."
+                                            class="admin-input flex-1"
+                                        ></textarea>
+                                        <button class="admin-button self-end">
+                                            Reply
+                                        </button>
+                                    </form>
+                                    <button
+                                        type="button"
+                                        class="admin-secondary text-rose-300 hover:border-rose-400 hover:text-rose-200"
+                                        @click="closeTicket(ticket)"
+                                    >
+                                        Close ticket
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </article>
                 <p v-if="!filteredTickets.length" class="text-slate-400">
                     No tickets match the current filter.
                 </p>
             </section>
+
+            <div
+                v-if="selectedUser"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="user-details-title"
+                @click.self="selectedUser = null"
+                @keydown.esc="selectedUser = null"
+            >
+                <section
+                    class="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl shadow-black/50"
+                >
+                    <div class="flex items-start justify-between gap-4">
+                        <h2
+                            id="user-details-title"
+                            class="text-xl font-semibold text-white"
+                        >
+                            User details
+                        </h2>
+                        <button
+                            type="button"
+                            class="admin-secondary"
+                            aria-label="Close user details"
+                            @click="selectedUser = null"
+                        >
+                            Close
+                        </button>
+                    </div>
+                    <dl class="mt-6 grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <dt class="admin-label">First name</dt>
+                            <dd class="break-words text-sm text-slate-200">
+                                {{ selectedUser.first_name }}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="admin-label">Last name</dt>
+                            <dd class="break-words text-sm text-slate-200">
+                                {{ selectedUser.last_name }}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="admin-label">Email</dt>
+                            <dd class="break-words text-sm text-slate-200">
+                                {{ selectedUser.email }}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="admin-label">Role</dt>
+                            <dd
+                                class="text-sm text-slate-200 capitalize"
+                            >
+                                {{ selectedUser.role }}
+                            </dd>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <dt class="admin-label">Address</dt>
+                            <dd class="break-words text-sm text-slate-200">
+                                {{ selectedUser.living_address || 'Not provided' }}
+                            </dd>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <dt class="admin-label">Phone number</dt>
+                            <dd class="break-words text-sm text-slate-200">
+                                {{ selectedUser.phone_number || 'Not provided' }}
+                            </dd>
+                        </div>
+                    </dl>
+                </section>
+            </div>
+
+            <div
+                v-if="isSelfDemotionModalOpen"
+                class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="self-demotion-title"
+                aria-describedby="self-demotion-description"
+                @click.self="isSelfDemotionModalOpen = false"
+                @keydown.esc="isSelfDemotionModalOpen = false"
+            >
+                <section
+                    class="w-full max-w-md rounded-2xl border border-amber-500/30 bg-slate-900 p-6 shadow-2xl shadow-black/50"
+                >
+                    <div class="flex items-start gap-4">
+                        <span
+                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-lg font-bold text-amber-300"
+                            aria-hidden="true"
+                            >!</span
+                        >
+                        <div>
+                            <h2
+                                id="self-demotion-title"
+                                class="text-lg font-semibold text-white"
+                            >
+                                Account role cannot be changed
+                            </h2>
+                            <p
+                                id="self-demotion-description"
+                                class="mt-2 text-sm text-slate-300"
+                            >
+                                You cannot demote your own account. Ask another
+                                administrator to change your role.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end">
+                        <button
+                            type="button"
+                            class="admin-button"
+                            autofocus
+                            @click="isSelfDemotionModalOpen = false"
+                        >
+                            Got it
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <div
+                v-if="userPendingRoleChange"
+                class="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="change-user-role-title"
+                aria-describedby="change-user-role-description"
+                @click.self="userPendingRoleChange = null"
+                @keydown.esc="userPendingRoleChange = null"
+            >
+                <section
+                    class="w-full max-w-md rounded-2xl border border-indigo-400/30 bg-slate-900 p-6 shadow-2xl shadow-black/50"
+                >
+                    <h2
+                        id="change-user-role-title"
+                        class="text-lg font-semibold text-white"
+                    >
+                        {{
+                            userPendingRoleChange.action === 'promote'
+                                ? 'Promote user to admin?'
+                                : 'Demote admin to user?'
+                        }}
+                    </h2>
+                    <p
+                        id="change-user-role-description"
+                        class="mt-2 text-sm text-slate-300"
+                    >
+                        Confirm changing
+                        {{ userPendingRoleChange.user.first_name }}
+                        {{ userPendingRoleChange.user.last_name }}'s role
+                        {{
+                            userPendingRoleChange.action === 'promote'
+                                ? 'to admin. They will have access to administrative features.'
+                                : 'to user. They will lose access to administrative features.'
+                        }}
+                    </p>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button
+                            type="button"
+                            class="admin-secondary"
+                            @click="userPendingRoleChange = null"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            class="admin-button"
+                            @click="confirmUserRoleChange"
+                        >
+                            {{
+                                userPendingRoleChange.action === 'promote'
+                                    ? 'Promote user'
+                                    : 'Demote user'
+                            }}
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <div
+                v-if="userPendingDelete"
+                class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="delete-user-title"
+                aria-describedby="delete-user-description"
+                @click.self="userPendingDelete = null"
+                @keydown.esc="userPendingDelete = null"
+            >
+                <section
+                    class="w-full max-w-md rounded-2xl border border-rose-500/30 bg-slate-900 p-6 shadow-2xl shadow-black/50"
+                >
+                    <h2
+                        id="delete-user-title"
+                        class="text-lg font-semibold text-white"
+                    >
+                        Delete {{ userPendingDelete.first_name }}
+                        {{ userPendingDelete.last_name }}?
+                    </h2>
+                    <p
+                        id="delete-user-description"
+                        class="mt-2 text-sm text-slate-300"
+                    >
+                        This will permanently delete the user account and its
+                        associated data. This action cannot be undone.
+                    </p>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button
+                            type="button"
+                            class="admin-secondary"
+                            @click="userPendingDelete = null"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            class="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500"
+                            @click="confirmDeleteUser"
+                        >
+                            Delete user
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <div
+                v-if="ticketPendingClose"
+                class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="close-ticket-title"
+                aria-describedby="close-ticket-description"
+                @click.self="ticketPendingClose = null"
+                @keydown.esc="ticketPendingClose = null"
+            >
+                <section
+                    class="w-full max-w-md rounded-2xl border border-rose-500/30 bg-slate-900 p-6 shadow-2xl shadow-black/50"
+                >
+                    <h2
+                        id="close-ticket-title"
+                        class="text-lg font-semibold text-white"
+                    >
+                        Close ticket #{{ ticketPendingClose.id }}?
+                    </h2>
+                    <p
+                        id="close-ticket-description"
+                        class="mt-2 text-sm text-slate-300"
+                    >
+                        The ticket will be marked as closed. You can still view
+                        its conversation, but it can no longer receive replies.
+                    </p>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button
+                            type="button"
+                            class="admin-secondary"
+                            @click="ticketPendingClose = null"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            class="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500"
+                            @click="confirmCloseTicket"
+                        >
+                            Close ticket
+                        </button>
+                    </div>
+                </section>
+            </div>
         </main>
     </div>
 </template>
