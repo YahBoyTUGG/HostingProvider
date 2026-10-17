@@ -1,0 +1,94 @@
+[Sat Oct 17 22:32:06 2026] PHP 8.4.24 Development Server (http://127.0.0.1:8000) started
+[Sat Oct 17 22:32:28 2026] 127.0.0.1:64658 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:64658 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:34120 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:34120 [200]: GET /build/assets/app-EFRTqpSb.css
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:7604 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:1357 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:7604 [200]: GET /build/assets/instrument-sans-400-normal-DRC__1Mx.woff2
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:13009 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:1357 [200]: GET /build/assets/instrument-sans-500-normal-Dk9ku72i.woff2
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:59337 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:13009 [200]: GET /build/assets/instrument-sans-600-normal-B7fBEWYG.woff2
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:34120 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:62541 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:59337 [200]: GET /build/assets/Welcome-DidSokWX.css
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:7604 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:16181 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:62541 [200]: GET /build/assets/app-BXX1NSED.js
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:1357 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:34809 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:16181 [200]: GET /build/assets/wayfinder-Db91UEjY.js
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:13009 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:34809 [200]: GET /build/assets/useAppearance-Bd57Y40E.js
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:59337 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:35851 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:62541 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:35851 [200]: GET /build/assets/Heading-C_P_W7BQ.js
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:16181 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:34809 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:35851 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:26761 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:55571 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:4076 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:47068 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:26761 [200]: GET /build/assets/shared-Ddr2ayLE.js
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:55571 [200]: GET /build/assets/button-QgvcYQUB.js
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:4076 [200]: GET /build/assets/profile-xGoyjYBU.js
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:47068 [200]: GET /build/assets/appearance-CwAqrzCx.js
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:20063 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:26761 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:55571 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:4076 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:47068 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:30599 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:20063 [200]: GET /build/assets/security-Cwz3-Oui.js
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:30599 [200]: GET /build/assets/lib-Be65kO8h.js
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:20063 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:30599 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:5315 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:37916 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:5281 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:4256 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:4637 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:5315 [200]: GET /build/assets/Welcome-5kMJEzGI.js
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:37916 [200]: GET /build/assets/SiteHeader-DCbDxwlE.js
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:5281 [200]: GET /build/assets/x-Cy3HdfOb.js
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:4256 [200]: GET /build/assets/useForwardExpose-CMI3dlSD.js
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:63733 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:4637 [200]: GET /build/assets/createLucideIcon-KHj4goOX.js
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:63733 [200]: GET /build/assets/useForwardPropsEmits-tAxl490c.js
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:5315 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:37916 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:5281 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:4256 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:4637 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:63733 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:52023 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:30906 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:15200 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:35690 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:52023 [200]: GET /build/assets/sun-Da2NUDb7.js
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:30906 [200]: GET /build/assets/routes-DxibXOCs.js
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:15200 [200]: GET /build/assets/shield-check-CSurPBCZ.js
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:35690 [200]: GET /build/assets/_plugin-vue_export-helper-BDNMzG2s.js
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:52023 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:30906 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:15200 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:35690 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:7233 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:7233 [200]: GET /images/docker-logo.png
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:7233 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:31037 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:11964 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:5751 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:31037 [200]: GET /build/assets/instrument-sans-600-normal-B9e8oLYv.woff
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:11964 [200]: GET /build/assets/instrument-sans-500-normal-Z6ESRlEs.woff
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:5751 [200]: GET /build/assets/instrument-sans-400-normal-D1W7dsQl.woff
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:31037 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:11964 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:5751 Closing
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:47382 Accepted
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:47382 [200]: GET /favicon.ico
+[Sat Oct 17 22:32:29 2026] 127.0.0.1:47382 Closing
+^C
