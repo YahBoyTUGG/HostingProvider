@@ -3,8 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    cpus: 0.5
-    mem_limit: 512m
+    cpus: 0.25
+    mem_limit: 256m
     depends_on:
       db:
         condition: service_healthy
@@ -42,8 +42,8 @@ services:
 
   db:
     image: mysql:8.0
-    cpus: 0.5
-    mem_limit: 512m
+    cpus: 0.25
+    mem_limit: 256m
     environment:
       MYSQL_DATABASE: ${DB_DATABASE:-delovna_praksa}
       MYSQL_USER: ${DB_USERNAME:-app}
