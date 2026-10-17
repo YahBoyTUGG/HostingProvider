@@ -11,8 +11,8 @@ return new class extends Migration
         Schema::create('features', function (Blueprint $table) {
             $table->id();
             $table->foreignId('server_offer_id')
-                  ->constrained('server_offers')
-                  ->cascadeOnDelete();
+                ->constrained('server_offers')
+                ->cascadeOnDelete();
 
             $table->string('badge')->nullable(); // e.g. "Most Popular", "Best Value"
             $table->string('button_text')->default('Deploy Rig');

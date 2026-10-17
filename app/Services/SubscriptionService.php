@@ -2,33 +2,31 @@
 
 namespace App\Services;
 
-use App\Models\User;
 use App\Models\ServerOffer;
 use App\Models\Subscription;
+use App\Models\User;
 use App\Models\VirtualMachine;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 class SubscriptionService
 {
     /**
      * Handle purchasing a server offer and provisioning a simulated VM.
      */
+    /**
+     * @param  array<int, int|string>  $app_ids
+     */
     public function create_subscription(User $user, ServerOffer $offer, int $osId, string $cycle, string $machineName, array $app_ids = []): Subscription
     {
         return DB::transaction(function () use ($user, $offer, $osId, $cycle, $machineName, $app_ids) {
-            $durationMonths = match($cycle) {
-                'monthly' => 1,
-                '6_months' => 6,
-                '1_year' => 12,
-                '2_years' => 24,
-            };
-
-            $cost = match($cycle) {
-                'monthly' => $offer->price_monthly,
-                '6_months' => $offer->price_6_months ?? ($offer->price_monthly * 6),
-                '1_year' => $offer->price_1_year,
-                '2_years' => $offer->price_2_years ?? ($offer->price_1_year * 2),
+            [$durationMonths, $cost] = match ($cycle) {
+                'monthly' => [1, $offer->price_monthly],
+                '6_months' => [6, $offer->price_6_months ?? ($offer->price_monthly * 6)],
+                '1_year' => [12, $offer->price_1_year],
+                '2_years' => [24, $offer->price_2_years ?? ($offer->price_1_year * 2)],
+                default => throw new InvalidArgumentException('Unsupported billing cycle.'),
             };
 
             // 1. Store Subscription record
@@ -47,7 +45,7 @@ class SubscriptionService
                 'subscription_id' => $subscription->id,
                 'operating_system_id' => $osId,
                 'name' => $machineName,
-                'ip_address' => rand(11, 199) . '.' . rand(0, 255) . '.' . rand(0, 255) . '.' . rand(1, 254),
+                'ip_address' => rand(11, 199).'.'.rand(0, 255).'.'.rand(0, 255).'.'.rand(1, 254),
                 'ssh_port' => 22,
                 'ssh_user' => 'root',
                 'ssh_password_hash' => bcrypt(Str::random(12)),
@@ -55,7 +53,7 @@ class SubscriptionService
             ]);
 
             // 3. Attach optional preinstalled software
-            if (!empty($app_ids)) {
+            if (! empty($app_ids)) {
                 $vm->preinstalledApps()->sync($app_ids);
             }
 

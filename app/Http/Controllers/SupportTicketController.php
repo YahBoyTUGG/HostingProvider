@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ticket;
-use Illuminate\Validation\Rule;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -35,8 +36,8 @@ class SupportTicketController extends Controller
         return Inertia::render('CreateTicket', [
             'subscriptions' => $subscriptions->map(fn ($subscription) => [
                 'id' => $subscription->id,
-                'name' => $subscription->serverOffer?->name ?? 'Unnamed service',
-                'ip_address' => $subscription->virtualMachine?->ip_address ?? '',
+                'name' => $subscription->serverOffer->name,
+                'ip_address' => $subscription->virtualMachine?->ip_address ?: '',
             ])->values(),
         ]);
     }
@@ -52,7 +53,7 @@ class SupportTicketController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'affected_service' => [

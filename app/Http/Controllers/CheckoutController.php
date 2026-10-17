@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ServerOffer;
-use App\Models\OperatingSystem;
 use App\Models\AvailableApp;
+use App\Models\OperatingSystem;
+use App\Models\ServerOffer;
 use App\Services\SubscriptionService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class CheckoutController extends Controller
 {
-    public function show(ServerOffer $offer)
+    public function show(ServerOffer $offer): Response
     {
         return Inertia::render('Checkout/Show', [
             'offer' => $offer,
@@ -23,7 +25,7 @@ class CheckoutController extends Controller
         ]);
     }
 
-    public function store(Request $request, ServerOffer $offer, SubscriptionService $service)
+    public function store(Request $request, ServerOffer $offer, SubscriptionService $service): RedirectResponse
     {
         // Sanitize card input formatting before validation
         $request->merge([

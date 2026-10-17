@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ServerOffer extends Model
 {
+    /** @use HasFactory<Factory<ServerOffer>> */
     use HasFactory;
 
     protected $fillable = [
@@ -49,11 +51,13 @@ class ServerOffer extends Model
     /**
      * Active subscriptions purchased from this server offer.
      */
+    /** @return HasMany<Subscription, $this> */
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class);
     }
 
+    /** @return HasOne<Features, $this> */
     public function featured_offer(): HasOne
     {
         return $this->hasOne(Features::class);

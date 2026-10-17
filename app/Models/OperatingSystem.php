@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OperatingSystem extends Model
 {
+    /** @use HasFactory<Factory<OperatingSystem>> */
     use HasFactory;
 
     protected $appends = [
@@ -39,6 +41,7 @@ class OperatingSystem extends Model
     /**
      * Virtual machines provisioned using this OS.
      */
+    /** @return HasMany<VirtualMachine, $this> */
     public function virtualMachines(): HasMany
     {
         return $this->hasMany(VirtualMachine::class);

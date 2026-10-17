@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
-use App\Models\ServerOffer;
-use App\Models\OperatingSystem;
 use App\Models\AvailableApp;
+use App\Models\OperatingSystem;
+use App\Models\ServerOffer;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

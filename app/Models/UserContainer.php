@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserContainer extends Model
 {
+    /** @use HasFactory<Factory<UserContainer>> */
     use HasFactory;
 
     protected $guarded = [];
@@ -23,11 +25,13 @@ class UserContainer extends Model
         ];
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return BelongsTo<Dockerfile, $this> */
     public function dockerfile(): BelongsTo
     {
         return $this->belongsTo(Dockerfile::class);

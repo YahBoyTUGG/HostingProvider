@@ -16,6 +16,11 @@ class DockerContainerService
     public function deploy(User $user, UploadedFile $archive, string $name, int $memoryLimitMb, float $cpuLimitCores, int $containerPort): Dockerfile
     {
         $archivePath = $archive->store("docker-contexts/{$user->id}", 'local');
+
+        if ($archivePath === false) {
+            throw new RuntimeException('The uploaded archive could not be stored.');
+        }
+
         $dockerfile = Dockerfile::create([
             'user_id' => $user->id,
             'name' => $name,
@@ -178,6 +183,11 @@ class DockerContainerService
         try {
             for ($index = 0; $index < $zip->numFiles; $index++) {
                 $entry = $zip->getNameIndex($index);
+
+                if ($entry === false) {
+                    throw new RuntimeException('The archive contains an unreadable file path.');
+                }
+
                 $normalized = str_replace('\\', '/', $entry);
 
                 if ($normalized === '' || str_starts_with($normalized, '/') || str_contains($normalized, '../') || preg_match('/^[A-Za-z]:/', $normalized)) {
@@ -197,15 +207,24 @@ class DockerContainerService
         }
     }
 
+    /**
+     * @param  list<string>  $arguments
+     * @return array{exit_code: int, output: string}
+     */
     private function runDocker(array $arguments): array
     {
         $outputPath = tempnam(sys_get_temp_dir(), 'docker-output-');
+
+        if ($outputPath === false) {
+            throw new RuntimeException('A temporary output file could not be created.');
+        }
+
         $descriptors = [
             0 => ['pipe', 'r'],
             1 => ['file', $outputPath, 'w'],
             2 => ['file', $outputPath, 'a'],
         ];
-        $process = proc_open(array_merge(['docker'], $arguments), $descriptors, $pipes);
+        $process = proc_open(['docker', ...$arguments], $descriptors, $pipes);
 
         if (! is_resource($process)) {
             throw new RuntimeException('Docker is not available on this server.');

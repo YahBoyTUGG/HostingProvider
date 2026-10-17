@@ -14,13 +14,15 @@ use App\Models\User;
 use App\Models\UserContainer;
 use App\Models\VirtualMachine;
 use App\Services\DockerContainerService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class AdminDashboardController extends Controller
 {
-    public function index(DockerContainerService $dockerService)
+    public function index(DockerContainerService $dockerService): Response
     {
         $dockerfiles = Dockerfile::with([
             'user:id,first_name,last_name,email',
@@ -65,7 +67,7 @@ class AdminDashboardController extends Controller
         ]);
     }
 
-    public function pauseDockerContainer(UserContainer $userContainer, DockerContainerService $service)
+    public function pauseDockerContainer(UserContainer $userContainer, DockerContainerService $service): RedirectResponse
     {
         try {
             $service->pause($userContainer);
@@ -78,7 +80,7 @@ class AdminDashboardController extends Controller
         return back()->with('success', 'Docker container paused.');
     }
 
-    public function unpauseDockerContainer(UserContainer $userContainer, DockerContainerService $service)
+    public function unpauseDockerContainer(UserContainer $userContainer, DockerContainerService $service): RedirectResponse
     {
         try {
             $service->unpause($userContainer);
@@ -91,14 +93,14 @@ class AdminDashboardController extends Controller
         return back()->with('success', 'Docker container resumed.');
     }
 
-    public function destroyDockerfile(Dockerfile $dockerfile, DockerContainerService $service)
+    public function destroyDockerfile(Dockerfile $dockerfile, DockerContainerService $service): RedirectResponse
     {
         $service->remove($dockerfile->load('userContainers'));
 
         return back()->with('success', 'Docker image, container, and source archive removed.');
     }
 
-    public function update_subscription_status(Request $request, Subscription $subscription)
+    public function update_subscription_status(Request $request, Subscription $subscription): RedirectResponse
     {
         $subscription->update($request->validate([
             'status' => 'required|in:active,cancelled,expired',
@@ -107,7 +109,7 @@ class AdminDashboardController extends Controller
         return back()->with('success', 'Subscription status updated.');
     }
 
-    public function update_virtual_machine_status(Request $request, VirtualMachine $virtualMachine)
+    public function update_virtual_machine_status(Request $request, VirtualMachine $virtualMachine): RedirectResponse
     {
         $virtualMachine->update($request->validate([
             'status' => 'required|in:running,stopped,provisioning',
@@ -116,14 +118,14 @@ class AdminDashboardController extends Controller
         return back()->with('success', 'Virtual machine status updated.');
     }
 
-    public function promote_user(User $user)
+    public function promote_user(User $user): RedirectResponse
     {
         $user->update(['role' => 'admin']);
 
         return back()->with('success', 'User promoted to admin.');
     }
 
-    public function demote_user(Request $request, User $user)
+    public function demote_user(Request $request, User $user): RedirectResponse
     {
         if ($request->user()->is($user)) {
             return back()->with('error', 'You cannot demote your own account.');
@@ -134,7 +136,7 @@ class AdminDashboardController extends Controller
         return back()->with('success', 'User demoted.');
     }
 
-    public function store_user(Request $request)
+    public function store_user(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
@@ -152,7 +154,7 @@ class AdminDashboardController extends Controller
         return back()->with('success', 'User created.');
     }
 
-    public function destroy_user(Request $request, User $user)
+    public function destroy_user(Request $request, User $user): RedirectResponse
     {
         abort_if($request->user()->is($user), 422, 'You cannot delete your own account.');
 
@@ -161,7 +163,7 @@ class AdminDashboardController extends Controller
         return back()->with('success', 'User deleted.');
     }
 
-    public function updateUser(Request $request, User $user)
+    public function updateUser(Request $request, User $user): RedirectResponse
     {
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
@@ -176,7 +178,7 @@ class AdminDashboardController extends Controller
         return back()->with('success', 'User profile updated.');
     }
 
-    public function store_offer(Request $request)
+    public function store_offer(Request $request): RedirectResponse
     {
         $validated = $this->validateOffer($request);
 
@@ -185,28 +187,28 @@ class AdminDashboardController extends Controller
         return back()->with('success', 'Server offer created.');
     }
 
-    public function update_offer(Request $request, ServerOffer $offer)
+    public function update_offer(Request $request, ServerOffer $offer): RedirectResponse
     {
         $offer->update($this->validateOffer($request));
 
         return back()->with('success', 'Server offer updated.');
     }
 
-    public function destroy_offer(ServerOffer $offer)
+    public function destroy_offer(ServerOffer $offer): RedirectResponse
     {
         $offer->delete();
 
         return back()->with('success', 'Offer deleted.');
     }
 
-    public function update_feature(Request $request, Features $feature)
+    public function update_feature(Request $request, Features $feature): RedirectResponse
     {
         $feature->update($this->validateFeature($request));
 
         return back()->with('success', 'Featured offer updated.');
     }
 
-    public function store_feature(Request $request)
+    public function store_feature(Request $request): RedirectResponse
     {
         $validated = $this->validateFeature($request);
 
@@ -221,21 +223,21 @@ class AdminDashboardController extends Controller
         return back()->with('success', 'Featured offer created.');
     }
 
-    public function destroy_feature(Features $feature)
+    public function destroy_feature(Features $feature): RedirectResponse
     {
         $feature->delete();
 
         return back()->with('success', 'Featured offer removed.');
     }
 
-    public function mark_contact_read(Contact $contact)
+    public function mark_contact_read(Contact $contact): RedirectResponse
     {
         $contact->update(['is_read' => true]);
 
         return back()->with('success', 'Contact marked as read.');
     }
 
-    public function reply_to_ticket(Request $request, Ticket $ticket)
+    public function reply_to_ticket(Request $request, Ticket $ticket): RedirectResponse
     {
         $validated = $request->validate([
             'message' => 'required|string|max:2000',
@@ -250,13 +252,14 @@ class AdminDashboardController extends Controller
         return back()->with('success', 'Ticket response sent.');
     }
 
-    public function close_ticket(Ticket $ticket)
+    public function close_ticket(Ticket $ticket): RedirectResponse
     {
         $ticket->update(['status' => 'closed']);
 
         return back()->with('success', 'Ticket closed.');
     }
 
+    /** @return array<string, mixed> */
     private function validateOffer(Request $request): array
     {
         return $request->validate([
@@ -279,6 +282,7 @@ class AdminDashboardController extends Controller
         ]);
     }
 
+    /** @return array<string, mixed> */
     private function validateFeature(Request $request): array
     {
         return $request->validate([

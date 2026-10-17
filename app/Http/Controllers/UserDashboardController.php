@@ -11,11 +11,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class UserDashboardController extends Controller
 {
-    public function index(Request $request, DockerContainerService $service)
+    public function index(Request $request, DockerContainerService $service): Response
     {
         $user = $request->user();
 
@@ -156,11 +157,13 @@ class UserDashboardController extends Controller
         return back();
     }
 
-    public function toggle_power(Subscription $subscription)
+    public function toggle_power(Subscription $subscription): RedirectResponse
     {
         $this->authorize_owner($subscription);
 
         $vm = $subscription->virtualMachine;
+        abort_unless($vm !== null, 404);
+
         if ($vm->status === 'provisioning') {
             return back()->withErrors([
                 'power' => 'Power controls are unavailable while the server is provisioning.',
@@ -181,7 +184,7 @@ class UserDashboardController extends Controller
         return back();
     }
 
-    public function cancel(Subscription $subscription, SubscriptionService $service)
+    public function cancel(Subscription $subscription, SubscriptionService $service): RedirectResponse
     {
         $this->authorize_owner($subscription);
 

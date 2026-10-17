@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\User;
 use App\Models\OperatingSystem;
 use App\Models\ServerOffer;
 use App\Models\Subscription;
+use App\Models\User;
 use App\Models\VirtualMachine;
 
 test('guests are redirected to the login page', function () {
