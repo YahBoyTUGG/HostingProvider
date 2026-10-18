@@ -1,6 +1,6 @@
 services:
   app:
-    image: filippopopovski/velocityrig:v1
+    image: filippopovski/velocityrig:v1
     cpus: 0.25
     mem_limit: 512m
     depends_on:
