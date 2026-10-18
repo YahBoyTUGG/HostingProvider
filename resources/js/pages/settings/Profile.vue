@@ -15,6 +15,12 @@ const profileForm = useForm({
     living_address: user.value.living_address ?? '',
 });
 
+const cancelProfileEdit = () => {
+    profileForm.reset();
+    profileForm.clearErrors();
+    isProfileEditorOpen.value = false;
+};
+
 const passwordForm = useForm({
     current_password: '',
     password: '',
@@ -25,6 +31,7 @@ const updateProfile = () => {
     profileForm.patch('/settings/profile', {
         preserveScroll: true,
         onSuccess: () => {
+            profileForm.defaults();
             isProfileEditorOpen.value = false;
         },
     });
@@ -215,7 +222,7 @@ const updatePassword = () => {
                         type="button"
                         class="profile-close"
                         aria-label="Close edit information dialog"
-                        @click="isProfileEditorOpen = false"
+                        @click="cancelProfileEdit"
                     >
                         &times;
                     </button>
@@ -278,7 +285,7 @@ const updatePassword = () => {
                         <button
                             type="button"
                             class="profile-secondary"
-                            @click="isProfileEditorOpen = false"
+                            @click="cancelProfileEdit"
                         >
                             Cancel</button
                         ><button

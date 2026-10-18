@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Models\UserContainer;
 use App\Models\VirtualMachine;
 use App\Services\DockerContainerService;
+use App\Services\SubscriptionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -116,6 +117,13 @@ class AdminDashboardController extends Controller
         ]));
 
         return back()->with('success', 'Virtual machine status updated.');
+    }
+
+    public function destroy_virtual_machine(VirtualMachine $virtualMachine, SubscriptionService $service): RedirectResponse
+    {
+        $service->cancel_subscription($virtualMachine->subscription);
+
+        return back()->with('success', 'Virtual machine deleted and subscription cancelled.');
     }
 
     public function promote_user(User $user): RedirectResponse
@@ -235,6 +243,13 @@ class AdminDashboardController extends Controller
         $contact->update(['is_read' => true]);
 
         return back()->with('success', 'Contact marked as read.');
+    }
+
+    public function destroy_contact(Contact $contact): RedirectResponse
+    {
+        $contact->delete();
+
+        return back()->with('success', 'Contact deleted.');
     }
 
     public function reply_to_ticket(Request $request, Ticket $ticket): RedirectResponse

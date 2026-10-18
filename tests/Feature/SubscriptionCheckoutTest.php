@@ -89,4 +89,43 @@ class SubscriptionCheckoutTest extends TestCase
         $this->get(route('checkout.show', $offer))
             ->assertRedirect(route('login'));
     }
+
+    public function test_checkout_returns_a_validation_error_for_a_cvc_that_is_too_short(): void
+    {
+        $user = User::factory()->create();
+        $offer = ServerOffer::create([
+            'name' => 'Test Cloud VPS',
+            'type' => 'vps',
+            'ram_gb' => 4,
+            'cpu_cores' => 2,
+            'storage_amount_gb' => 40,
+            'storage_type' => 'NVMe SSD',
+            'bandwidth_tb' => 2,
+            'price_monthly' => 10.00,
+            'price_1_year' => 100.00,
+            'country' => 'Germany',
+            'city' => 'Frankfurt',
+        ]);
+        $operatingSystem = OperatingSystem::create([
+            'name' => 'Ubuntu',
+            'version' => '24.04 LTS',
+            'type' => 'vps',
+        ]);
+
+        $this->actingAs($user)
+            ->from(route('checkout.show', $offer))
+            ->post(route('checkout.store', $offer), [
+                'operating_system_id' => $operatingSystem->id,
+                'machine_name' => 'test-machine-01',
+                'billing_cycle' => 'monthly',
+                'cardholder_name' => 'Test User',
+                'card_number' => '4242 4242 4242 4242',
+                'card_expiry' => '12/30',
+                'card_cvc' => '12',
+            ])
+            ->assertRedirect(route('checkout.show', $offer))
+            ->assertSessionHasErrors([
+                'card_cvc' => 'The card cvc field must be between 3 and 4 digits.',
+            ]);
+    }
 }

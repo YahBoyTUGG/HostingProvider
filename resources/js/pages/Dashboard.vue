@@ -53,6 +53,8 @@ interface Subscription {
 
 defineProps<{
     activeSubscriptions: Subscription[];
+    runningServerCount: number;
+    activeInstanceCount: number;
     monthlySpend: number;
     subscriptionHistory: Subscription[];
     dockerfiles: Dockerfile[];
@@ -278,7 +280,7 @@ const confirmCancelSubscription = () => {
                     </p>
                     <div class="mt-2 flex items-baseline justify-between">
                         <span class="text-3xl font-extrabold text-white">{{
-                            activeSubscriptions.length
+                            activeInstanceCount
                         }}</span>
                         <span
                             class="rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400"
@@ -335,7 +337,7 @@ const confirmCancelSubscription = () => {
                         Provisioned Servers
                     </h2>
                     <span class="text-sm text-slate-400"
-                        >{{ activeSubscriptions.length }} Servers Running</span
+                        >{{ runningServerCount }} Servers Running</span
                     >
                 </div>
 

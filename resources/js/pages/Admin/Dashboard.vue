@@ -161,6 +161,8 @@ const userPendingRoleChange = ref<{
 } | null>(null);
 const expandedTicketIds = ref<Set<number>>(new Set());
 const ticketPendingClose = ref<Ticket | null>(null);
+const contactPendingDelete = ref<Contact | null>(null);
+const virtualMachinePendingDelete = ref<VirtualMachine | null>(null);
 const search = reactive<Record<Tab, string>>({
     users: '',
     offers: '',
@@ -516,6 +518,7 @@ const editOffer = (offer: Offer) => {
 const resetOffer = () => {
     editingOfferId.value = null;
     Object.assign(offerForm, emptyOffer());
+    activeView.value = 'list';
 };
 
 const deleteOffer = (offer: Offer) => {
@@ -591,6 +594,22 @@ const deleteFeaturedOffer = (feature: FeaturedOffer) => {
 
 const markRead = (contact: Contact) =>
     router.post(`/admin/contacts/${contact.id}/read`);
+const deleteContact = (contact: Contact) => {
+    contactPendingDelete.value = contact;
+};
+
+const confirmDeleteContact = () => {
+    if (!contactPendingDelete.value) {
+        return;
+    }
+
+    const contact = contactPendingDelete.value;
+    router.delete(`/admin/contacts/${contact.id}`, {
+        onSuccess: () => {
+            contactPendingDelete.value = null;
+        },
+    });
+};
 const sendReply = (ticket: Ticket) => {
     const message = responseForms[ticket.id]?.trim();
 
@@ -677,6 +696,19 @@ const toggleDockerContainerPause = (container: DockerContainer) => {
             },
         },
     );
+};
+
+const confirmDeleteVirtualMachine = () => {
+    if (!virtualMachinePendingDelete.value) {
+        return;
+    }
+
+    const virtualMachine = virtualMachinePendingDelete.value;
+    router.delete(`/admin/virtual-machines/${virtualMachine.id}`, {
+        onSuccess: () => {
+            virtualMachinePendingDelete.value = null;
+        },
+    });
 };
 
 const removeDockerfile = (dockerfile: Dockerfile) => {
@@ -1780,58 +1812,73 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
                                 </p>
                             </div>
                             <div
-                                class="inline-flex rounded-lg border border-slate-800 bg-slate-950 p-1"
+                                class="flex flex-wrap items-center gap-3"
                             >
+                                <div
+                                    class="inline-flex rounded-lg border border-slate-800 bg-slate-950 p-1"
+                                >
+                                    <button
+                                        type="button"
+                                        class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
+                                        :class="
+                                            virtualMachine.status === 'running'
+                                                ? 'border border-emerald-500/30 bg-emerald-500/20 text-emerald-300'
+                                                : 'text-slate-400 hover:text-slate-200'
+                                        "
+                                        @click="
+                                            setVirtualMachineStatus(
+                                                virtualMachine,
+                                                'running',
+                                            )
+                                        "
+                                    >
+                                        Running
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
+                                        :class="
+                                            virtualMachine.status === 'stopped'
+                                                ? 'border border-rose-500/30 bg-rose-500/20 text-rose-300'
+                                                : 'text-slate-400 hover:text-slate-200'
+                                        "
+                                        @click="
+                                            setVirtualMachineStatus(
+                                                virtualMachine,
+                                                'stopped',
+                                            )
+                                        "
+                                    >
+                                        Stopped
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
+                                        :class="
+                                            virtualMachine.status ===
+                                            'provisioning'
+                                                ? 'border border-amber-500/30 bg-amber-500/20 text-amber-300'
+                                                : 'text-slate-400 hover:text-slate-200'
+                                        "
+                                        @click="
+                                            setVirtualMachineStatus(
+                                                virtualMachine,
+                                                'provisioning',
+                                            )
+                                        "
+                                    >
+                                        Provisioning
+                                    </button>
+                                </div>
                                 <button
                                     type="button"
-                                    class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
-                                    :class="
-                                        virtualMachine.status === 'running'
-                                            ? 'border border-emerald-500/30 bg-emerald-500/20 text-emerald-300'
-                                            : 'text-slate-400 hover:text-slate-200'
-                                    "
+                                    class="rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-500"
                                     @click="
-                                        setVirtualMachineStatus(
-                                            virtualMachine,
-                                            'running',
-                                        )
+                                        virtualMachinePendingDelete =
+                                            virtualMachine
                                     "
                                 >
-                                    Running
-                                </button>
-                                <button
-                                    type="button"
-                                    class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
-                                    :class="
-                                        virtualMachine.status === 'stopped'
-                                            ? 'border border-rose-500/30 bg-rose-500/20 text-rose-300'
-                                            : 'text-slate-400 hover:text-slate-200'
-                                    "
-                                    @click="
-                                        setVirtualMachineStatus(
-                                            virtualMachine,
-                                            'stopped',
-                                        )
-                                    "
-                                >
-                                    Stopped
-                                </button>
-                                <button
-                                    type="button"
-                                    class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
-                                    :class="
-                                        virtualMachine.status === 'provisioning'
-                                            ? 'border border-amber-500/30 bg-amber-500/20 text-amber-300'
-                                            : 'text-slate-400 hover:text-slate-200'
-                                    "
-                                    @click="
-                                        setVirtualMachineStatus(
-                                            virtualMachine,
-                                            'provisioning',
-                                        )
-                                    "
-                                >
-                                    Provisioning
+                                    Delete
                                 </button>
                             </div>
                         </div>
@@ -2050,14 +2097,23 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
                                 {{ contact.name }} · {{ contact.email }}
                             </p>
                         </div>
-                        <button
-                            v-if="!contact.is_read"
-                            type="button"
-                            class="text-xs text-indigo-300"
-                            @click="markRead(contact)"
-                        >
-                            Mark read
-                        </button>
+                        <div class="flex items-center gap-3">
+                            <button
+                                v-if="!contact.is_read"
+                                type="button"
+                                class="text-xs text-indigo-300"
+                                @click="markRead(contact)"
+                            >
+                                Mark read
+                            </button>
+                            <button
+                                type="button"
+                                class="text-xs text-rose-300 hover:text-rose-200"
+                                @click="deleteContact(contact)"
+                            >
+                                Delete
+                            </button>
+                        </div>
                     </div>
                     <p class="mt-4 text-sm whitespace-pre-wrap text-slate-300">
                         {{ contact.message }}
@@ -2523,6 +2579,98 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
                             @click="confirmDeleteUser"
                         >
                             Delete user
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <div
+                v-if="contactPendingDelete"
+                class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="delete-contact-title"
+                aria-describedby="delete-contact-description"
+                @click.self="contactPendingDelete = null"
+                @keydown.esc="contactPendingDelete = null"
+            >
+                <section
+                    class="w-full max-w-md rounded-2xl border border-rose-500/30 bg-slate-900 p-6 shadow-2xl shadow-black/50"
+                >
+                    <h2
+                        id="delete-contact-title"
+                        class="text-lg font-semibold text-white"
+                    >
+                        Delete this contact?
+                    </h2>
+                    <p
+                        id="delete-contact-description"
+                        class="mt-2 text-sm text-slate-300"
+                    >
+                        This will permanently delete the message
+                        "{{ contactPendingDelete.subject }}" from
+                        {{ contactPendingDelete.name }}. This action cannot be
+                        undone.
+                    </p>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button
+                            type="button"
+                            class="admin-secondary"
+                            @click="contactPendingDelete = null"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            class="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500"
+                            @click="confirmDeleteContact"
+                        >
+                            Delete contact
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <div
+                v-if="virtualMachinePendingDelete"
+                class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="delete-virtual-machine-title"
+                aria-describedby="delete-virtual-machine-description"
+                @click.self="virtualMachinePendingDelete = null"
+                @keydown.esc="virtualMachinePendingDelete = null"
+            >
+                <section
+                    class="w-full max-w-md rounded-2xl border border-rose-500/30 bg-slate-900 p-6 shadow-2xl shadow-black/50"
+                >
+                    <h2
+                        id="delete-virtual-machine-title"
+                        class="text-lg font-semibold text-white"
+                    >
+                        Delete {{ virtualMachinePendingDelete.name }}?
+                    </h2>
+                    <p
+                        id="delete-virtual-machine-description"
+                        class="mt-2 text-sm text-slate-300"
+                    >
+                        This will permanently delete the virtual machine and
+                        cancel its subscription. This action cannot be undone.
+                    </p>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button
+                            type="button"
+                            class="admin-secondary"
+                            @click="virtualMachinePendingDelete = null"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            class="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500"
+                            @click="confirmDeleteVirtualMachine"
+                        >
+                            Delete VM and cancel subscription
                         </button>
                     </div>
                 </section>

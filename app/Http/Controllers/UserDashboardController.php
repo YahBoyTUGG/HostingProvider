@@ -25,6 +25,14 @@ class UserDashboardController extends Controller
             ->where('status', 'active')
             ->get();
 
+        $runningServerCount = $activeSubscriptions->filter(
+            fn (Subscription $subscription) => $subscription->virtualMachine?->isRunning(),
+        )->count();
+        $activeInstanceCount = $activeSubscriptions->filter(
+            fn (Subscription $subscription) => $subscription->virtualMachine !== null
+                && $subscription->virtualMachine->status !== 'provisioning',
+        )->count();
+
         // Total spending breakdown
         $monthlySpend = $activeSubscriptions->sum(fn ($sub) => $sub->monthly_equivalent_cost);
 
@@ -50,6 +58,8 @@ class UserDashboardController extends Controller
 
         return Inertia::render('Dashboard', [
             'activeSubscriptions' => $activeSubscriptions,
+            'runningServerCount' => $runningServerCount,
+            'activeInstanceCount' => $activeInstanceCount,
             'monthlySpend' => round($monthlySpend, 2),
             'subscriptionHistory' => $subscriptionHistory,
             'dockerfiles' => $dockerfiles,

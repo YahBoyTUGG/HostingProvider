@@ -115,12 +115,28 @@ const endDate = computed(() => {
     return dateFormatter.format(date);
 });
 
+const formatCardholderName = () => {
+    form.cardholder_name = form.cardholder_name.replace(/[0-9]/g, '');
+};
+
 const formatCardNumber = () => {
     form.card_number = form.card_number
         .replace(/\D/g, '')
         .slice(0, 16)
         .replace(/(.{4})/g, '$1 ')
         .trim();
+};
+
+const formatCardExpiry = () => {
+    const digits = form.card_expiry.replace(/\D/g, '').slice(0, 4);
+    form.card_expiry =
+        digits.length > 2
+            ? `${digits.slice(0, 2)}/${digits.slice(2)}`
+            : digits;
+};
+
+const formatCardCvc = () => {
+    form.card_cvc = form.card_cvc.replace(/\D/g, '').slice(0, 4);
 };
 
 const submit = () => {
@@ -268,7 +284,13 @@ const confirmSubmit = () => {
                                     required
                                     class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-slate-100 shadow-sm transition outline-none placeholder:text-slate-600 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/30"
                                     autocomplete="cc-name"
-                            /></label>
+                                    @input="formatCardholderName"
+                                /><span
+                                    v-if="form.errors.cardholder_name"
+                                    class="mt-1 block text-sm text-rose-300"
+                                    >{{ form.errors.cardholder_name }}</span
+                                ></label
+                            >
                             <label class="sm:col-span-2"
                                 ><span
                                     class="mb-2 block text-sm font-medium text-slate-200"
@@ -298,8 +320,16 @@ const confirmSubmit = () => {
                                     inputmode="numeric"
                                     placeholder="MM/YY"
                                     autocomplete="cc-exp"
+                                    maxlength="5"
+                                    pattern="[0-9]{2}/[0-9]{2}"
                                     class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-slate-100 shadow-sm transition outline-none placeholder:text-slate-600 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/30"
-                            /></label>
+                                    @input="formatCardExpiry"
+                                /><span
+                                    v-if="form.errors.card_expiry"
+                                    class="mt-1 block text-sm text-rose-300"
+                                    >{{ form.errors.card_expiry }}</span
+                                ></label
+                            >
                             <label
                                 ><span
                                     class="mb-2 block text-sm font-medium text-slate-200"
@@ -313,7 +343,13 @@ const confirmSubmit = () => {
                                     autocomplete="cc-csc"
                                     placeholder="123"
                                     class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-slate-100 shadow-sm transition outline-none placeholder:text-slate-600 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/30"
-                            /></label>
+                                    @input="formatCardCvc"
+                                /><span
+                                    v-if="form.errors.card_cvc"
+                                    class="mt-1 block text-sm text-rose-300"
+                                    >{{ form.errors.card_cvc }}</span
+                                ></label
+                            >
                         </div>
                     </section>
                 </div>
