@@ -99,6 +99,10 @@ return [
 
     'key' => env('APP_KEY'),
 
+    'seed_admin_email' => env('SEED_ADMIN_EMAIL'),
+
+    'seed_admin_password' => env('SEED_ADMIN_PASSWORD'),
+
     'previous_keys' => [
         ...array_filter(
             explode(',', (string) env('APP_PREVIOUS_KEYS', '')),

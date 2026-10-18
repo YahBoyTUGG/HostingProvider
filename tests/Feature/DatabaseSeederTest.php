@@ -6,6 +6,7 @@ use App\Models\Ticket;
 use App\Models\User;
 use App\Models\VirtualMachine;
 use Database\Seeders\DatabaseSeeder;
+use Illuminate\Support\Facades\Hash;
 
 it('seeds virtual server plans, customer accounts, subscriptions, virtual machines, and tickets', function () {
     $this->seed(DatabaseSeeder::class);
@@ -26,7 +27,7 @@ it('seeds virtual server plans, customer accounts, subscriptions, virtual machin
         ->and(VirtualMachine::where('status', 'provisioning')->count())->toBeGreaterThan(0)
         ->and(Ticket::count())->toBe(15);
 
-    $this->seed(DatabaseSeeder::class);
+    $this->app->make(DatabaseSeeder::class)->run();
 
     expect(User::where('role', 'user')->count())->toBe(10)
         ->and(ServerOffer::count())->toBe(12)
@@ -35,4 +36,21 @@ it('seeds virtual server plans, customer accounts, subscriptions, virtual machin
         ->and(Subscription::where('status', 'expired')->count())->toBe(1)
         ->and(VirtualMachine::count())->toBe(20)
         ->and(Ticket::count())->toBe(15);
+});
+
+it('uses supplied admin credentials and random passwords for production seed accounts', function () {
+    $this->app['env'] = 'production';
+    config([
+        'app.seed_admin_email' => 'production-admin@example.com',
+        'app.seed_admin_password' => 'a-private-test-password-that-is-long-enough',
+    ]);
+
+    $this->app->make(DatabaseSeeder::class)->run();
+
+    expect(Hash::check('a-private-test-password-that-is-long-enough', User::where('email', 'production-admin@example.com')->value('password')))
+        ->toBeTrue()
+        ->and(Hash::check('password', User::where('email', 'emily.carter@example.com')->value('password')))
+        ->toBeFalse()
+        ->and(Hash::check('seeded-vm-password', VirtualMachine::firstOrFail()->ssh_password_hash))
+        ->toBeFalse();
 });

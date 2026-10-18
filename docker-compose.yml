@@ -1,6 +1,6 @@
 services:
   app:
-    image: filippopovski/velocityrig:v2
+    image: filippopovski/velocityrig:v3
     cpus: 0.25
     mem_limit: 512m
     depends_on:
@@ -13,6 +13,9 @@ services:
       APP_KEY: ${APP_KEY}
       APP_URL: ${APP_URL}
       INERTIA_SSR_ENABLED: "false"
+      RUN_DATABASE_SEEDER: ${RUN_DATABASE_SEEDER:-false}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
       DB_CONNECTION: mysql
       DB_HOST: db
       DB_PORT: "3306"
@@ -26,7 +29,7 @@ services:
     command:
       - sh
       - -c
-      - php artisan migrate --force && exec php artisan serve --host=0.0.0.0 --port=8000
+      - php artisan migrate --force && if [ "$$RUN_DATABASE_SEEDER" = "true" ]; then php artisan db:seed --force; fi && exec php artisan serve --host=0.0.0.0 --port=8000
     healthcheck:
       test:
         - CMD

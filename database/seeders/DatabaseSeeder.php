@@ -12,19 +12,37 @@ use App\Models\User;
 use App\Models\VirtualMachine;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use RuntimeException;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $isProduction = app()->environment('production');
+        $adminEmail = $isProduction ? config('app.seed_admin_email') : 'admin@admin.com';
+        $adminPassword = $isProduction ? config('app.seed_admin_password') : 'admin';
+
+        if (
+            $isProduction
+            && (
+                ! is_string($adminEmail)
+                || $adminEmail === ''
+                || ! is_string($adminPassword)
+                || strlen($adminPassword) < 16
+            )
+        ) {
+            throw new RuntimeException('Set SEED_ADMIN_EMAIL and a SEED_ADMIN_PASSWORD of at least 16 characters before production seeding.');
+        }
+
         $admin = User::updateOrCreate(
-            ['email' => 'admin@admin.com'],
+            ['email' => $adminEmail],
             [
                 'first_name' => 'Alex',
                 'last_name' => 'Morgan',
                 'living_address' => '100 Main Street, New York, NY',
                 'phone_number' => '+12125550100',
-                'password' => 'admin',
+                'password' => $adminPassword,
                 'role' => 'admin',
             ],
         );
@@ -106,20 +124,28 @@ class DatabaseSeeder extends Seeder
                 'living_address' => '277 Harbor Street, San Diego, CA',
                 'phone_number' => '+16195550110',
             ],
-        ])->map(function (array $attributes): User {
+        ])->map(function (array $attributes) use ($isProduction): User {
             $legacyEmail = $attributes['legacy_email'] ?? null;
             unset($attributes['legacy_email']);
 
             $user = $legacyEmail ? User::where('email', $legacyEmail)->first() : null;
             if ($user) {
-                $user->update([...$attributes, 'password' => 'password', 'role' => 'user']);
+                $user->update([
+                    ...$attributes,
+                    'password' => $isProduction ? Str::random(64) : 'password',
+                    'role' => 'user',
+                ]);
 
                 return $user;
             }
 
             return User::updateOrCreate(
                 ['email' => $attributes['email']],
-                [...$attributes, 'password' => 'password', 'role' => 'user'],
+                [
+                    ...$attributes,
+                    'password' => $isProduction ? Str::random(64) : 'password',
+                    'role' => 'user',
+                ],
             );
         });
 
@@ -292,7 +318,7 @@ class DatabaseSeeder extends Seeder
         ];
 
         $subscriptions = collect($subscriptionSpecs)->map(
-            function (array $spec) use ($users, $offers, $operatingSystems): Subscription {
+            function (array $spec) use ($users, $offers, $operatingSystems, $isProduction): Subscription {
                 $offer = $offers[$spec['offer']];
                 $subscription = Subscription::updateOrCreate(
                     [
@@ -316,7 +342,9 @@ class DatabaseSeeder extends Seeder
                         'ip_address' => $spec['ip'],
                         'ssh_port' => 22,
                         'ssh_user' => 'root',
-                        'ssh_password_hash' => Hash::make('seeded-vm-password'),
+                        'ssh_password_hash' => Hash::make(
+                            $isProduction ? Str::random(64) : 'seeded-vm-password',
+                        ),
                         'status' => $spec['vm_status'],
                     ],
                 );
