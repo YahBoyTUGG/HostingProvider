@@ -26,7 +26,7 @@ class UserDashboardController extends Controller
             ->get();
 
         $runningServerCount = $activeSubscriptions->filter(
-            fn (Subscription $subscription) => $subscription->virtualMachine?->isRunning(),
+            fn (Subscription $subscription) => $subscription->virtualMachine?->isRunning() ?? false,
         )->count();
         $activeInstanceCount = $activeSubscriptions->filter(
             fn (Subscription $subscription) => $subscription->virtualMachine !== null

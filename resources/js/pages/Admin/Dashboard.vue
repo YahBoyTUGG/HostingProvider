@@ -1811,9 +1811,7 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
                                     }}
                                 </p>
                             </div>
-                            <div
-                                class="flex flex-wrap items-center gap-3"
-                            >
+                            <div class="flex flex-wrap items-center gap-3">
                                 <div
                                     class="inline-flex rounded-lg border border-slate-800 bg-slate-950 p-1"
                                 >
@@ -2607,10 +2605,10 @@ const removeDockerfile = (dockerfile: Dockerfile) => {
                         id="delete-contact-description"
                         class="mt-2 text-sm text-slate-300"
                     >
-                        This will permanently delete the message
-                        "{{ contactPendingDelete.subject }}" from
-                        {{ contactPendingDelete.name }}. This action cannot be
-                        undone.
+                        This will permanently delete the message "{{
+                            contactPendingDelete.subject
+                        }}" from {{ contactPendingDelete.name }}. This action
+                        cannot be undone.
                     </p>
                     <div class="mt-6 flex justify-end gap-3">
                         <button

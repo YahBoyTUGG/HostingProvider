@@ -130,9 +130,7 @@ const formatCardNumber = () => {
 const formatCardExpiry = () => {
     const digits = form.card_expiry.replace(/\D/g, '').slice(0, 4);
     form.card_expiry =
-        digits.length > 2
-            ? `${digits.slice(0, 2)}/${digits.slice(2)}`
-            : digits;
+        digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
 };
 
 const formatCardCvc = () => {
